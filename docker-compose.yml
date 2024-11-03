@@ -1,0 +1,31 @@
+# docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chatdb
+    ports:
+      - "7433:5432"
+    volumes:
+      - ./db/database_setup.sql:/docker-entrypoint-initdb.d/database_setup.sql
+
+  streamlit:
+    build: .
+    ports:
+      - "8501:8501"
+    depends_on:
+      - postgres
+
+  #vector database with persistent storage
+  vecdb:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vecdb
+    ports:
+      - 6433:5432      
+    volumes:
+      - ./vecdb:/var/lib/postgresql/data      
