@@ -7,7 +7,11 @@ PROJECT = chat2dbchatbot
 SRC_DIR = ./$(PROJECT)
 
 # Default target
-all: venv install
+all: dev
+
+# Development environment
+dev: venv install dev_services
+	ENV=dev $(VENV_BIN)/python -m streamlit run $(SRC_DIR)/app.py
 
 # Create virtual environment
 venv:
@@ -16,6 +20,10 @@ venv:
 # Install dependencies
 install: venv
 	$(VENV_BIN)/pip install -r requirements.txt
+
+# Start necessary services for development
+dev_services:
+	docker compose up -d postgres vecdb
 
 # Docker targets
 # Build the Docker image

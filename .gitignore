@@ -163,3 +163,5 @@ cython_debug/
 
 vecdb/
 .DS_Store
+db/converted/
+WIP_*.*

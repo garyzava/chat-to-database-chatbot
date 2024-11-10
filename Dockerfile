@@ -4,18 +4,20 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy files
-COPY app.py /app/
-COPY db/database_setup.sql /db/
+#COPY app.py /app/
+COPY chat2dbchatbot /app/
+#COPY db/database_setup.sql /db/
+COPY db /db/
 
 # Install dependencies
 #RUN pip install streamlit psycopg2-binary
 
-#Copy requirements.txt to the image
-COPY requirements.txt /app/  
+#Copy requirements.txt and .env to the image
+COPY requirements.txt /app/
+COPY .env /app/
 
 # Install dependencies
 RUN pip install -r requirements.txt
-
 
 # Expose the Streamlit port
 EXPOSE 8501
