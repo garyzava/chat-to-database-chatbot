@@ -1,10 +1,10 @@
 # Chat to your Database GenAI Chatbot
 
-A web chatbot interface for database interactions using natural language questions through various interaction methods (RAG, TAG, Fine-tuning) with different LLMs, including comprehensive observability and tracking.
+A web chatbot interface for database interactions using natural language questions through various interaction methods (RAG, TAG) with different LLMs, including comprehensive observability and tracking.
 
 ## Features
 
-- Multiple interaction methods (RAG, TAG, Fine-tuning)
+- Multiple interaction methods (RAG, TAG)
 - LLM provider selection (OpenAI, Claude)
 - Intent classification
 - Vector search with PGVector
@@ -18,8 +18,8 @@ A web chatbot interface for database interactions using natural language questio
 - Docker and Docker Compose
 - Python 3.9+
 - OpenAI API key
-- Anthropic API key (optional)
-- Langfuse account
+- Anthropic API key
+- Langfuse account (optional)
 
 ## Installation
 
@@ -32,20 +32,28 @@ cd chat-to-database-chatbot
 Copy .env.example to .env and fill in your API keys and configurations.
 
 3. Build and Start the Docker services (one-off)
+
+One-off command:
 ```bash
 make run
 ```
 
-4. Run the application:
+After the installation, simply run:
 ```bash
-make up
+make rup
 ```
+
+4. Or run the application in developer mode:
+```bash
+make dev
+```
+
+The developer mode installs the streamlit app locally but the databases are still installed on Docker
 
 5. Shut down the application:
 ```bash
 make down
 ```
-
 
 ## Ingest metadata (TO-DO)
 
@@ -53,10 +61,15 @@ make down
 python ingest.py "doc.pdf"
 ```
 
+## Call the RAG.py Module
+```bash
+cd chat2dbchatbot
+python -m tools.rag "what is the track with the most revenue" --llm OpenAI --temperature 0.1
+```
 
 ## Chatbot Usage
 
-1. Select your preferred interaction method (RAG, TAG, or Fine-tuning)
+1. Select your preferred interaction method (RAG, TAG)
 2. Choose an LLM provider (OpenAI or Claude)
 3. Start asking questions about your database
 
