@@ -7,3 +7,5 @@ llama-index-vector-stores-postgres==0.2.6
 llama-index-embeddings-huggingface==0.3.1
 llama-index-readers-docling==0.2.1
 llama-index-node-parser-docling==0.2.0
+llama-index-llms-anthropic==0.4.1
+llama-index-llms-openai==0.2.16
