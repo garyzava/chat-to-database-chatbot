@@ -1,5 +1,4 @@
-import os
-from dotenv import load_dotenv
+#import os
 from tools.ingest import VectorSearch
 from tools.db import DatabaseManager
 
@@ -11,6 +10,7 @@ from llama_index.core.query_engine import NLSQLTableQueryEngine
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.anthropic import Anthropic
 
+from dotenv import load_dotenv
 load_dotenv()
 
 class RAGSearch(VectorSearch):

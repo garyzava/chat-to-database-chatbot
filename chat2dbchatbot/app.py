@@ -3,12 +3,15 @@ from dataclasses import dataclass
 import os
 from dotenv import load_dotenv
 from tools.db import DatabaseManager
-from tools.rag import RAGSearch
+from tools.rag import RAGSearch # RAG
+from tools.tag import create_tag_pipeline # TAG
 
 # Load environment variables
 load_dotenv()
 
 #import openai
+import asyncio
+
 
 @dataclass
 class ChatConfig:
@@ -49,7 +52,7 @@ class ChatDatabase:
             response = rag_search.query(f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}")
             st.write("Generated response:-", response)
             print("Generated response:- ", response)
-            sql_query = str(response).strip("`sql\n").strip("`")
+            sql_query = str(response).strip("`sql\n").strip("`") #not needed
             print("Generated SQL:- ", sql_query)
             # Execute SQL query
             sql_result = rag_search.sql_query(str(sql_query))
@@ -63,43 +66,59 @@ class ChatDatabase:
             return f"Error in RAG pipeline: {str(e)}"        
 
 
+    async def tag_pipeline(self, query: str, config: ChatConfig) -> str:
+        """TAG pipeline for database queries"""
+        try:
+            # Verify database connections
+            if not self.vec_db_manager or not self.chat_db_manager:
+                return "Error: Database connections not initialized"
+                
+            # Initialize TAG workflow
+            tag_workflow = create_tag_pipeline(
+                vec_db_manager=self.vec_db_manager,
+                chat_db_manager=self.chat_db_manager,
+                config=config
+            )
+            
+            # Execute workflow
+            handler = tag_workflow.run(query=query)
+            
+            # Stream events if workflow is verbose
+    #        if tag_workflow._verbose:
+    #            async for event in handler.stream_events():
+    #                if isinstance(event, QuerySynthesisEvent):
+    #                    st.write("Generated SQL:", event.sql_query)
+    #                elif isinstance(event, QueryExecutionEvent):
+    #                    st.write("Query Results:", event.results)
+                        
+            # Get final response
+            response = await handler
+            return str(response)
+
+            # Get final response with timeout
+#            try:
+#                response = await asyncio.wait_for(handler, timeout=120.0)
+#                return str(response)
+#            except asyncio.TimeoutError:
+#                return "The operation timed out. Please try again or simplify your query."
+
+        except Exception as e:
+            return f"Error in TAG pipeline: {str(e)}"
+
 def main():
-    # Database setup
-#    db_manager = DatabaseManager(db_type='vecdb')
-#    if not db_manager.test_connection():
-#        st.error("Database connection failed")
-#        return
-    
-    # OpenAI setup
-#    openai.api_key = os.getenv('OPENAI_API_KEY')
-#    if not openai.api_key:
-#        st.error("OPENAI_API_KEY not found in environment variables")
-#        return
-    
-#    vec_db_manager = DatabaseManager(db_type='vecdb')
-#    chat_db_manager = DatabaseManager(db_type='db')
-
-    # Initialize RAGSearch
-    #rag_search = RAGSearch(db_manager)
-#    rag_search = RAGSearch(vec_db_manager, chat_db_manager)
-
-#    if not vec_db_manager.test_connection() or not chat_db_manager.test_connection():
-#        raise ConnectionError("Database connection failed")    
-    
     # Streamlit UI
     st.title("🤖 Chat To Your Database 🤖")
 
     with st.sidebar:    
         interaction_method = st.selectbox(
             "Interaction Method",
-            ["RAG","TAG","Fine-tuning"],
+            ["RAG","TAG"],
             key="interaction_method"
         )
         
         llm_provider = st.selectbox(
             "LLM Provider",
             ["OpenAI", "Claude"],
-            disabled=interaction_method == "Fine-tuning",
             key="llm_provider"
         )
         
@@ -137,8 +156,9 @@ def main():
                 if interaction_method == "RAG":
                     response = chat.rag_pipeline(query, config)
                 elif interaction_method == "TAG":
-                    #response = chat.tag_pipeline(query, config)
-                    st.write("TAG pipeline not yet implemented")
+                    #response = await chat.tag_pipeline(query, config)
+
+                    response = asyncio.run(chat.tag_pipeline(query, config))
                 else:
                     response = "Fine-tuning pipeline not yet implemented"
         # Display chat history

@@ -61,10 +61,18 @@ make down
 python ingest.py "doc.pdf"
 ```
 
-## Call the RAG.py Module
+## Call the Modules Directly
+Running in local mode (make dev), go to the chat2dbchatbot directory
 ```bash
 cd chat2dbchatbot
+```
+Run the RAG utility
+```bash
 python -m tools.rag "what is the track with the most revenue" --llm OpenAI --temperature 0.1
+```
+Or run the TAG utility
+```bash
+python -m tools.tag "what is the track with the most revenue" --llm OpenAI --temperature 0.1
 ```
 
 ## Chatbot Usage
