@@ -18,7 +18,7 @@ class ChatConfig:
     """Configuration for chat application"""
     interaction_method: str
     llm_provider: str
-    #model_name: str = "gpt-3.5-turbo"
+    # openai_model_name: str = "gpt-3.5-turbo"
     openai_model_name: str = "gpt-4"
     #claude_model_name: str = "claude-3-opus-20240229"
     claude_model_name: str = "claude-3-5-sonnet-20241022"
@@ -28,6 +28,7 @@ class ChatDatabase:
     def __init__(self):
 
         # Initialize Vector Database
+        print("KM: Initialize Vector DB")
         try:
             self.vec_db_manager = DatabaseManager(db_type='vecdb')
             self.vec_db_manager.test_connection()
@@ -36,6 +37,7 @@ class ChatDatabase:
             self.vec_db_manager = None
         
         # Initialize Chat Database
+        print("KM: Initialize Chat Database")
         try:
             self.chat_db_manager = DatabaseManager(db_type='db')
             self.chat_db_manager.test_connection()
@@ -46,6 +48,7 @@ class ChatDatabase:
     def rag_pipeline(self, query: str, config: ChatConfig) -> str:
         """RAG pipeline for database queries"""
         try:
+            print("KM: Starting in rag_pipeline function")
             #rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager)
             rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager, config=config)
 
@@ -154,6 +157,7 @@ def main():
             else:
                 # Process based on method
                 if interaction_method == "RAG":
+                    print("KM: about to call RAG")
                     response = chat.rag_pipeline(query, config)
                 elif interaction_method == "TAG":
                     #response = await chat.tag_pipeline(query, config)
