@@ -30,4 +30,50 @@ services:
     ports:
       - 6433:5432      
     volumes:
-      - ./vecdb:/var/lib/postgresql/data      
+      - ./vecdb:/var/lib/postgresql/database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  langfuse:
+     image: langfuse/langfuse:2
+     environment:
+       DATABASE_URL: postgresql://postgres:postgres@vecdb:5432/langfuse
+       NEXTAUTH_URL: http://localhost:3000
+       NEXTAUTH_SECRET: mysecret
+       SALT: mysalt
+       ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+       LANGFUSE_INIT_ORG_ID: my-org
+       LANGFUSE_INIT_PROJECT_ID: my-project
+       LANGFUSE_INIT_PROJECT_PUBLIC_KEY: lf_pk_1234567890
+       LANGFUSE_INIT_PROJECT_SECRET_KEY: lf_sk_1234567890
+       LANGFUSE_INIT_EMAIL: admin@example.com
+       LANGFUSE_INIT_PASSWORD: adminpassword      
+     ports:
+       - "3000:3000"
+     depends_on:
+       vecdb:
+         condition: service_healthy
+
+  # langfuse-dev:
+  #   image: langfuse/langfuse:2
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:postgres@vecdb:6433/langfuse
+  #     NEXTAUTH_URL: http://localhost:3000
+  #     NEXTAUTH_SECRET: mysecret
+  #     SALT: mysalt
+  #     ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+  #     LANGFUSE_INIT_ORG_ID: my-org
+  #     LANGFUSE_INIT_PROJECT_ID: my-project
+  #     LANGFUSE_INIT_PROJECT_PUBLIC_KEY: lf_pk_1234567890
+  #     LANGFUSE_INIT_PROJECT_SECRET_KEY: lf_sk_1234567890
+  #     LANGFUSE_INIT_EMAIL: admin@example.com
+  #     LANGFUSE_INIT_PASSWORD: adminpassword      
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     vecdb:
+  #       condition: service_healthy
+  #   #profiles: ["dev"]
