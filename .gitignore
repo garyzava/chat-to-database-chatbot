@@ -162,10 +162,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+.vscode
 vecdb/
 .DS_Store
 db/converted/
-WIP_*.*
 
 .vscode/
 eval/draft.ipynb
+WIP_*

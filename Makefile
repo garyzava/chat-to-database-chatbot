@@ -24,6 +24,8 @@ install: venv
 # Start necessary services for development
 dev_services:
 	docker compose up -d postgres vecdb
+#	docker compose --profile dev up -d postgres vecdb langfuse-dev
+#	docker compose up -d postgres vecdb langfuse-dev
 
 # Docker targets
 # Build the Docker image
@@ -42,7 +44,9 @@ down:
 run: build up
 
 # Rebuild and restart
-restart: down build up
+restart: down
+	 docker compose build --no-cache
+	 docker compose up -d
 
 # Clean up virtual environment
 clean_venv:
@@ -51,3 +55,4 @@ clean_venv:
 # Clean up Docker containers
 clean_docker:
 	docker compose down -v --rmi all --remove-orphans
+	docker builder prune -f

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable
+#from typing import Iterable
 import json
 import os
 import openai
@@ -21,6 +21,9 @@ Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 # Use no LLM model
 #Settings.llm = None
 
+# Explicitly set the environment variable TOKENIZERS_PARALLELISM to false
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 class VectorSearch:
     def __init__(self, db_manager: DatabaseManager):
         self.db_manager = db_manager
@@ -34,7 +37,52 @@ class VectorSearch:
             schema_name="public",
             embed_dim=384
         )
+        #self.has_vectors = self._check_vectors_exist()
+        #print(f"Vector store has data: {self.has_vectors}")
+
+        # Check if vectors exist, create if needed
         self.has_vectors = self._check_vectors_exist()
+        if not self.has_vectors:
+            print("No vectors found. Creating new vector store...")
+            self._initialize_vectors()
+        else:
+            print("Using existing vector store")        
+
+    def _initialize_vectors(self):
+        """Initialize vector store with documents."""
+        try:
+            # Convert documents
+#            print(Path("./db/Chinook Data Dictionary.docx"))
+#            input_docs = [
+#                Path("./db/Chinook Data Dictionary.docx"),
+#                Path("./db/Chinook Data Model.docx")
+#            ]
+#            output_dir = Path("./db/converted")
+
+            local_path_1 = Path("./db/Chinook Data Dictionary.docx")
+            local_path_2 = Path("./db/Chinook Data Model.docx")
+            docker_path_1 = Path("/app/db/Chinook Data Dictionary.docx")
+            docker_path_2 = Path("/app/db/Chinook Data Model.docx")
+
+            if local_path_1.exists() and local_path_2.exists():
+                input_docs = [local_path_1, local_path_2]
+            elif docker_path_1.exists() and docker_path_2.exists():
+                input_docs = [docker_path_1, docker_path_2]
+            else:
+                raise FileNotFoundError("Document files not found in either local or Docker paths")
+
+            output_dir = Path("./db/converted") if local_path_1.exists() else Path("/app/db/converted")
+            
+
+            # Process documents
+            self.convert_documents(input_docs, output_dir)
+            
+            # Create index
+            self.create_index(output_dir)
+            self.has_vectors = True
+        except Exception as e:
+            print(f"Error initializing vectors: {e}")
+            self.has_vectors = False
 
     def _check_vectors_exist(self) -> bool:
         """Check if vectors exist in the database."""
@@ -47,9 +95,22 @@ class VectorSearch:
         """
         try:
             result = self.db_manager.execute_query(query)
-            if isinstance(result, list) and result[0][0]:
-                return True
-            return False
+            #if isinstance(result, list) and result[0][0]:
+            #    return True
+            #return False
+
+            if not (isinstance(result, list) and result[0][0]):
+                return False
+
+            # If table exists, check if it has records
+            records_query = f"""
+                SELECT EXISTS (
+                    SELECT 1 FROM data_{self.table_name} LIMIT 1
+                );
+            """
+            records_result = self.db_manager.execute_query(records_query)
+            return isinstance(records_result, list) and records_result[0][0]
+                
         except Exception as e:
             print(f"Error checking vector store: {e}")
             return False
