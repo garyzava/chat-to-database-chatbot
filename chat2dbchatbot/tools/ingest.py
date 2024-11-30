@@ -45,6 +45,9 @@ class VectorSearch:
         if not self.has_vectors:
             print("No vectors found. Creating new vector store...")
             self._initialize_vectors()
+            # check if there is error in initializing vectors (verify 30-nov)
+            if not self.has_vectors:
+                raise RuntimeError("Error initializing vector db")
         else:
             print("Using existing vector store")        
 
@@ -52,27 +55,32 @@ class VectorSearch:
         """Initialize vector store with documents."""
         try:
             # Convert documents
-#            print(Path("./db/Chinook Data Dictionary.docx"))
-#            input_docs = [
-#                Path("./db/Chinook Data Dictionary.docx"),
-#                Path("./db/Chinook Data Model.docx")
-#            ]
-#            output_dir = Path("./db/converted")
+            # Get base directory - use ENV variable for Docker. For docker, base directory is /app
+            is_docker = os.getenv('ENV', 'true').lower() == 'true'
+            base_dir = Path("/app") if is_docker else Path(__file__).parent.parent.parent
 
-            local_path_1 = Path("./db/Chinook Data Dictionary.docx")
-            local_path_2 = Path("./db/Chinook Data Model.docx")
-            docker_path_1 = Path("/app/db/Chinook Data Dictionary.docx")
-            docker_path_2 = Path("/app/db/Chinook Data Model.docx")
-
-            if local_path_1.exists() and local_path_2.exists():
-                input_docs = [local_path_1, local_path_2]
-            elif docker_path_1.exists() and docker_path_2.exists():
-                input_docs = [docker_path_1, docker_path_2]
-            else:
-                raise FileNotFoundError("Document files not found in either local or Docker paths")
-
-            output_dir = Path("./db/converted") if local_path_1.exists() else Path("/app/db/converted")
+            # Define document paths relative to base directory
+            doc_paths = [
+                "Chinook Data Dictionary.docx",
+                "Chinook Data Model.docx"
+            ]
             
+            # Construct full paths
+            input_docs = [base_dir / "db" / doc for doc in doc_paths]
+            
+            # Verify all files exist
+            if not all(path.exists() for path in input_docs):
+                raise FileNotFoundError(f"Documents not found in {base_dir / 'db'}")
+                
+            # Set output directory
+            output_dir = base_dir / "db" / "converted"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Process documents
+            self.convert_documents(input_docs, output_dir)
+            self.create_index(output_dir)
+            self.has_vectors = True
+
 
             # Process documents
             self.convert_documents(input_docs, output_dir)

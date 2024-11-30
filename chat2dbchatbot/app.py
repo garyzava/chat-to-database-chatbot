@@ -50,13 +50,12 @@ class ChatDatabase:
             rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager, config=config)
 
             response = rag_search.query(f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}")
-            st.write("Generated response:-", response)
-            print("Generated response:- ", response)
+            print("App.py Generated response:- ", response)
             sql_query = str(response).strip("`sql\n").strip("`") #not needed
-            print("Generated SQL:- ", sql_query)
+            print("App.py Generated SQL:- ", sql_query)
             # Execute SQL query
             sql_result = rag_search.sql_query(str(sql_query))
-            print("SQL Result:- ", sql_result)
+            print("App.py SQL Result:- ", sql_result)
 
             return sql_result
         #except Exception as e:
@@ -109,6 +108,9 @@ def main():
     # Streamlit UI
     st.title("🤖 Chat To Your Database 🤖")
 
+    if "messages" not in st.session_state:
+        st.session_state.messages = []    
+
     with st.sidebar:    
         interaction_method = st.selectbox(
             "Interaction Method",
@@ -129,7 +131,13 @@ def main():
                 max_value=1.0,
                 value=0.1,  # Default value
                 step=0.1
-            )            
+            )
+            #intent classifier toggle
+            intent_classifier_enabled = st.toggle(
+                "Intent Classifier",
+                value=st.session_state.intent_classifier_enabled,
+                help="Enable/disable intent classification"
+            )
 
     # Initialize chat interface
     chat = ChatDatabase()
@@ -148,35 +156,48 @@ def main():
         with st.spinner("Processing your question..."):
             # Check intent first
             #llm = chat.get_llm(config)
-            #if not chat.intent_classifier(query, llm):
-            if not True:
-                response = "This question doesn't appear to be database-related. Please try a database-related question."
-            else:
-                # Process based on method
-                if interaction_method == "RAG":
-                    response = chat.rag_pipeline(query, config)
-                elif interaction_method == "TAG":
-                    #response = await chat.tag_pipeline(query, config)
+            #if st.session_state.intent_classifier_enabled and not chat.intent_classifier(query, llm):
+            if not True:    
+                response = "This question doesn't appear to be database-related."
+                st.session_state.messages.append({"role": "classifier", "content": response})
+                st.chat_message("assistant").write(response)
+                return
 
-                    response = asyncio.run(chat.tag_pipeline(query, config))
-                else:
-                    response = "Fine-tuning pipeline not yet implemented"
-        # Display chat history
-        #for message in st.session_state.messages:
-            #st.write(f"{message['role']}: {message['content']}")
-            #st.session_state.messages.append({"role": "assistant", "content": response})
-        #    message.append({"role": "assistant", "content": response})
+            # Process query based on selected method
+            response = (
+                chat.rag_pipeline(query, config) if interaction_method == "RAG"
+                else asyncio.run(chat.tag_pipeline(query, config))
+            )
 
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        # The response.response object or str(response) contains the LLM answer
+#        st.session_state.messages.append({"role": "assistant", "content": response})
         
         # Display chat history
-        for message in st.session_state.messages:
-            st.write(f"{message['role']}: {message['content']}")
+#        for message in st.session_state.messages:
+#            with st.chat_message(message["role"]):
+#                st.write(message["content"])
+                # Print only the response.response
+#                if message["role"] == "assistant":
+#                    st.write(f"{message['role']}: {message['content']}")
 
+        # If it's an error message or custom string
+        if isinstance(response, str):
+            st.session_state.messages.append({"role": "assistant", "content": response})
+        # If it's a regular Response object
+        else:
+            st.session_state.messages.append({"role": "assistant", "content": response.response})
 
+    # Display the entire chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
 
 if __name__ == "__main__":
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+#    if "messages" not in st.session_state:
+#        st.session_state.messages = []
+
+    # Session state initialization for the Intent Classifier toggle
+    if "intent_classifier_enabled" not in st.session_state:
+        st.session_state.intent_classifier_enabled = False
     main()

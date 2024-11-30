@@ -55,14 +55,8 @@ The developer mode installs the streamlit app locally but the databases are stil
 make down
 ```
 
-## Ingest metadata (TO-DO)
-
-```bash
-python ingest.py "doc.pdf"
-```
-
 ## Call the Modules Directly
-Running in local mode (make dev), go to the chat2dbchatbot directory
+Running in local mode (make dev), go to the chat2dbchatbot directory. Make sure the virtual enviroment has been activated. Open a new terminal:
 ```bash
 cd chat2dbchatbot
 ```

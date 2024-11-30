@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import create_engine
 
 from llama_index.core import SQLDatabase
@@ -15,17 +17,12 @@ from llama_index.core.workflow import (
     Event
 )
 
-import argparse
-import sys
-
 from typing import List, Union
 
 from dotenv import load_dotenv
 load_dotenv()
 
-#import os
 #os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 
 class QuerySynthesisEvent(Event):
     """Event containing synthesized SQL query"""
@@ -99,7 +96,7 @@ class TAGWorkflow(Workflow):
 
             # Get the sql part from the response
             sql_query = response.metadata.get("sql_query", "")
-            print("sql_query metadata:-", sql_query)
+            print("Generated SQL:-", sql_query)
 
             # Analyze SQL from response
             valid_sql = self._is_valid_sql(sql_query)
@@ -249,13 +246,14 @@ async def run_tag_pipeline(query: str, llm_provider: str = "OpenAI", temperature
     
     try:
         result = await workflow.run(query=query)
+        print(f"Final Result: {result}")
         return result
     except Exception as e:
         print(f"Error running TAG pipeline: {e}")
         return None
 
 async def main():
-    """Main entry point for TAG pipeline CLI."""
+    os.environ['ENV'] = 'dev'
     parser = argparse.ArgumentParser(description='TAG Pipeline CLI')
     parser.add_argument('query', help='Natural language query for the database')
     parser.add_argument('--llm', default='OpenAI', choices=['OpenAI', 'Claude'],
@@ -271,12 +269,14 @@ async def main():
             llm_provider=args.llm,
             temperature=args.temperature
         )
-        print(f"Final Result: {result}")
+        #print(f"Final Result: {result}")
     except Exception as e:
         print(f"Error: {e}")
         return 1
     return 0
 
 if __name__ == "__main__":
+    import argparse
+    import sys
     import asyncio
     sys.exit(asyncio.run(main()))
