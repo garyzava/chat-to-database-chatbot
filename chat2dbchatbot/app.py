@@ -12,6 +12,9 @@ load_dotenv()
 #import openai
 import asyncio
 
+import pickle
+from pathlib import Path
+
 
 @dataclass
 class ChatConfig:
@@ -42,6 +45,56 @@ class ChatDatabase:
         except Exception as e:
             st.error(f"Error connecting to SQL database: {str(e)}")
             self.chat_db_manager = None
+
+        # Load classifier model
+        self.classifier = self.load_classifier()            
+
+    def load_classifier(self):
+        """Load the classifier model from a pickle file."""
+        current_dir = Path(__file__).parent
+        model_path = current_dir / 'classifier/combined_sql_classifier.pkl'
+        with open(model_path, 'rb') as file:
+            objects = pickle.load(file)
+        return objects
+
+    def classify_prompt(self, prompt):
+        """Classify the prompt using the loaded classifier."""
+        vectorizer = self.classifier["vectorizer"]
+        binary_classifier = self.classifier["binary_classifier"]
+        classifier_domain = self.classifier["classifier_domain"]
+        classifier_complexity = self.classifier["classifier_complexity"]
+        classifier_task_type = self.classifier["classifier_task_type"]
+        label_encoder_domain = self.classifier["label_encoder_domain"]
+        label_encoder_complexity = self.classifier["label_encoder_complexity"]
+        label_encoder_task_type = self.classifier["label_encoder_task_type"]
+
+        # Transform the prompt using the vectorizer
+        prompt_tfidf = vectorizer.transform([prompt])
+
+        # Binary Classification (SQL vs Non-SQL)
+        is_sql = binary_classifier.predict(prompt_tfidf)[0]
+
+        # If not SQL, return early
+        if is_sql == 0:
+            print("Classification Results: Non-SQL Query")
+            return False
+
+        # Predict using the classifiers
+        domain_prediction = classifier_domain.predict(prompt_tfidf)[0]
+        complexity_prediction = classifier_complexity.predict(prompt_tfidf)[0]
+        task_type_prediction = classifier_task_type.predict(prompt_tfidf)[0]
+
+        # Decode predictions
+        domain = label_encoder_domain.inverse_transform([domain_prediction])[0]
+        complexity = label_encoder_complexity.inverse_transform([complexity_prediction])[0]
+        task_type = label_encoder_task_type.inverse_transform([task_type_prediction])[0]
+
+        print("Classification Results: SQL Query")
+        print(f"Domain: {domain}")
+        print(f"Complexity: {complexity}")
+        print(f"Task Type: {task_type}")
+
+        return True
 
     def rag_pipeline(self, query: str, config: ChatConfig) -> str:
         """RAG pipeline for database queries"""
@@ -156,12 +209,13 @@ def main():
         with st.spinner("Processing your question..."):
             # Check intent first
             #llm = chat.get_llm(config)
-            #if st.session_state.intent_classifier_enabled and not chat.intent_classifier(query, llm):
-            if not True:    
-                response = "This question doesn't appear to be database-related."
-                st.session_state.messages.append({"role": "classifier", "content": response})
+#            if not (st.session_state.intent_classifier_enabled and chat.classify_prompt(query)):
+            if not True:
+#                response = "Message from Classifier: This question doesn't appear to be database-related."
+                st.session_state.messages.append({"role": "assistant", "content": response})
                 st.chat_message("assistant").write(response)
                 return
+#            else:
 
             # Process query based on selected method
             response = (
