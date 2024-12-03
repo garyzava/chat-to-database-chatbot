@@ -1,10 +1,13 @@
-sql_complexity,sql_complexity_description,sql_prompt,sql
-basic SQL,basic SQL with a simple select statement,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));"
-single join,"only one join (specify inner, outer, cross)",Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;"
-aggregation and single join,"aggregation functions (COUNT, SUM, AVG, MIN, MAX, etc.), and GROUP, with one join",list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;"
-basic SQL,basic SQL with a simple select statement,list all the countries our customers are from,SELECT distinct country from customer;
-simple aggregation,basic SQL with a simple select statement,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;"
-basic SQL,basic SQL with a simple select statement,What playlists are there?,SELECT name from playlist;
-two select layer,select within select,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')"
-single join,"only one join (specify inner, outer, cross)",List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;"
-basic SQL,basic SQL with a simple select statement,How many staff does the store have?,SELECT COUNT(*) from employee
+is_sql,text_query,expected_sql
+1,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));"
+1,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;"
+1,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;"
+1,list all the countries our customers are from,SELECT distinct country from customer
+1,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;"
+1,What playlists are there?,SELECT name from playlist
+1,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')"
+1,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;"
+1,How many staff does the store have?,SELECT COUNT(*) from employee
+0,Are we ready?,N/A
+0,Come along,N/A
+0,is the database secure? ,N/A

@@ -1,0 +1,195 @@
+,method,provider,temperature,text_query,expected_sql,expected_is_query,generated_sql,generated_is_sql,is_type_corrrect,generation_latency,isValidSQL,numFormatIssues,method_temperature
+0,rag,OpenAI,0.1,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT * FROM invoice
+WHERE invoice_date IN ('2021-12-24', '2021-12-25', '2021-12-26', '2021-12-31', '2022-01-01');",True,True,3222.730623994721,False,N/A,rag | Temp: 0.1
+1,rag,OpenAI,0.1,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) AS total_albums
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY total_albums DESC
+LIMIT 3;",True,True,3864.214027998969,False,N/A,rag | Temp: 0.1
+2,rag,OpenAI,0.1,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT composer, AVG(milliseconds) as average_track_length
+FROM track
+WHERE genre_id = (SELECT genre_id FROM genre WHERE name = 'Classic')
+GROUP BY composer;",True,True,2155.0099150044844,False,N/A,rag | Temp: 0.1
+3,rag,OpenAI,0.1,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer;,True,True,1047.5051629982772,False,N/A,rag | Temp: 0.1
+4,rag,OpenAI,0.1,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) as total_invoice_amount
+FROM invoice
+GROUP BY billing_country;",True,True,11922.924619000696,False,N/A,rag | Temp: 0.1
+5,rag,OpenAI,0.1,What playlists are there?,SELECT name from playlist,True,SELECT name FROM playlist;,True,True,12433.250628993846,False,N/A,rag | Temp: 0.1
+6,rag,OpenAI,0.1,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams');",True,True,14141.900624003028,False,N/A,rag | Temp: 0.1
+7,rag,OpenAI,0.1,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id;",True,True,13924.259390005318,False,N/A,rag | Temp: 0.1
+8,rag,OpenAI,0.1,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,11695.2465439972,False,N/A,rag | Temp: 0.1
+9,rag,OpenAI,0.1,Are we ready?,,False,"I'm sorry, but your question is not clear. Could you please provide more details or specify what information you are looking for in the database? This will help me generate the appropriate SQL query for you.",False,True,14256.440648001444,N/A,N/A,rag | Temp: 0.1
+10,rag,OpenAI,0.1,Come along,,False,"I'm sorry, but your question ""Come along"" is not clear. Could you please provide more details or context? Are you looking for specific data from a table, or do you want to perform a certain operation? Please provide more information so I can assist you better.",False,True,13412.90448899963,N/A,N/A,rag | Temp: 0.1
+11,rag,OpenAI,0.1,is the database secure? ,,False,"As an AI, I can't directly check the security of a database. However, you can use SQL queries to check certain aspects of security, such as user privileges. Here's an example of how you might do this in PostgreSQL:
+
+```sql
+SELECT usename, usecreatedb, usesuper, usecatupd, valuntil as password_expiration 
+FROM pg_user;
+```
+
+This query will return a list of all users and their privileges, as well as when their password will expire. Please note that this is just one aspect of database security and a comprehensive security audit would involve many other factors.",False,True,14550.198295000882,N/A,N/A,rag | Temp: 0.1
+12,rag,OpenAI,0.3,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT * FROM invoice 
+WHERE invoice_date IN ('2024-12-24', '2024-12-25', '2024-12-26', '2024-12-31', '2025-01-01');",True,True,11783.452701994975,False,N/A,rag | Temp: 0.3
+13,rag,OpenAI,0.3,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) as total_albums
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY total_albums DESC
+LIMIT 3;",True,True,13510.410773997137,False,N/A,rag | Temp: 0.3
+14,rag,OpenAI,0.3,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT track.composer, AVG(track.milliseconds) 
+FROM track 
+INNER JOIN genre ON track.genre_id = genre.genre_id 
+WHERE genre.name = 'Classic' 
+GROUP BY track.composer;",True,True,12552.958354004659,False,N/A,rag | Temp: 0.3
+15,rag,OpenAI,0.3,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer;,True,True,12258.875435996742,False,N/A,rag | Temp: 0.3
+16,rag,OpenAI,0.3,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) AS total_invoice_amount
+FROM invoice
+GROUP BY billing_country;",True,True,14342.067935001978,False,N/A,rag | Temp: 0.3
+17,rag,OpenAI,0.3,What playlists are there?,SELECT name from playlist,True,SELECT name FROM playlist;,True,True,12422.819733001234,False,N/A,rag | Temp: 0.3
+18,rag,OpenAI,0.3,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams');",True,True,14173.650363001798,False,N/A,rag | Temp: 0.3
+19,rag,OpenAI,0.3,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id;",True,True,13689.600338002492,False,N/A,rag | Temp: 0.3
+20,rag,OpenAI,0.3,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,11771.52278599533,False,N/A,rag | Temp: 0.3
+21,rag,OpenAI,0.3,Are we ready?,,False,"I'm sorry, but your question is too vague. Could you please provide more specific details or clarify what you're asking for? For example, are you asking if a specific table is ready, if a certain data entry process is complete, or something else? More details will help me generate the correct SQL query for you.",False,True,15980.542693003372,N/A,N/A,rag | Temp: 0.3
+22,rag,OpenAI,0.3,Come along,,False,"I'm sorry, but the question ""Come along"" is not clear enough to generate a SQL query. Could you please provide more details or clarify your request?",False,True,11514.151518997096,N/A,N/A,rag | Temp: 0.3
+23,rag,OpenAI,0.3,is the database secure? ,,False,"As an AI, I can't directly check the security of a database. However, I can suggest some SQL queries that could help identify potential security issues. For example, you could check for users with superuser privileges using the following query:
+
+```sql
+SELECT usename, usesuper FROM pg_user;
+```
+
+This will return a list of all users and a boolean indicating whether they have superuser privileges. If there are too many superusers or users with unnecessary privileges, it could be a potential security risk. 
+
+Please note that actual database security involves much more than just checking user privileges, including network security, encryption, regular updates, and more. It's recommended to consult with a database security expert for a comprehensive security audit.",False,True,17369.100195995998,N/A,N/A,rag | Temp: 0.3
+24,rag,OpenAI,0.5,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT * FROM invoice
+WHERE invoice_date IN ('2021-12-24', '2021-12-25', '2021-12-26', '2021-12-31', '2022-01-01');",True,True,14055.701396995573,False,N/A,rag | Temp: 0.5
+25,rag,OpenAI,0.5,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) AS total_albums
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY total_albums DESC
+LIMIT 3;",True,True,13128.068578000239,False,N/A,rag | Temp: 0.5
+26,rag,OpenAI,0.5,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT track.composer, AVG(track.milliseconds) 
+FROM track 
+WHERE track.genre_id = (SELECT genre.genre_id FROM genre WHERE genre.name = 'Classic') 
+GROUP BY track.composer;",True,True,12452.841336998972,False,N/A,rag | Temp: 0.5
+27,rag,OpenAI,0.5,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer;,True,True,12088.188006004202,False,N/A,rag | Temp: 0.5
+28,rag,OpenAI,0.5,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) AS total_invoice_amount
+FROM invoice
+GROUP BY billing_country;",True,True,13842.550883993681,False,N/A,rag | Temp: 0.5
+29,rag,OpenAI,0.5,What playlists are there?,SELECT name from playlist,True,SELECT name FROM playlist;,True,True,12924.118181996164,False,N/A,rag | Temp: 0.5
+30,rag,OpenAI,0.5,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams');",True,True,14457.835781999165,False,N/A,rag | Temp: 0.5
+31,rag,OpenAI,0.5,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id;",True,True,13128.192955002305,False,N/A,rag | Temp: 0.5
+32,rag,OpenAI,0.5,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,12228.596811000898,False,N/A,rag | Temp: 0.5
+33,rag,OpenAI,0.5,Are we ready?,,False,"I'm sorry, but the question ""Are we ready?"" is too vague. Please provide more specific details about the information you're looking to retrieve from the database, such as the table and column names, as well as any conditions for the data.",False,True,15503.982466005255,N/A,N/A,rag | Temp: 0.5
+34,rag,OpenAI,0.5,Come along,,False,"I'm sorry, but the question ""Come along"" doesn't provide enough information to generate a SQL query. Could you please provide more details or clarify your request?",False,True,15248.41570299759,N/A,N/A,rag | Temp: 0.5
+35,rag,OpenAI,0.5,is the database secure? ,,False,"As an AI, I can't directly check the security of a database. However, you can use SQL to check some security-related aspects such as user privileges. Here is an example:
+
+```sql
+SELECT usename, usecreatedb, usesuper, usecatupd 
+FROM pg_user;
+```
+
+This query will return a list of all users and their privileges. The column `usesuper` indicates if the user is a superuser and `usecreatedb` indicates if the user can create databases. Please note, this does not provide a comprehensive view of the database's security. For a thorough security assessment, you should consult a database security expert or use specialized security tools.",False,True,15446.009603998391,N/A,N/A,rag | Temp: 0.5
+36,tag,OpenAI,0.1,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT invoice_id, customer_id, invoice_date, total 
+FROM invoice 
+WHERE invoice_date::date IN ('2022-12-24', '2022-12-25', '2022-12-26', '2022-12-31', '2023-01-01')
+ORDER BY invoice_date;",True,True,19865.488708004705,False,N/A,tag | Temp: 0.1
+37,tag,OpenAI,0.1,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) AS total_albums
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY total_albums DESC
+LIMIT 3;",True,True,5597.884154994972,False,N/A,tag | Temp: 0.1
+38,tag,OpenAI,0.1,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT composer, AVG(milliseconds) 
+FROM track 
+INNER JOIN genre ON track.genre_id = genre.genre_id 
+WHERE genre.name = 'Classical' 
+GROUP BY composer;",True,True,14411.999782001658,False,N/A,tag | Temp: 0.1
+39,tag,OpenAI,0.1,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer,True,True,3661.741041003552,False,N/A,tag | Temp: 0.1
+40,tag,OpenAI,0.1,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) as total_invoice_amount
+FROM invoice
+GROUP BY billing_country
+ORDER BY total_invoice_amount DESC;",True,True,8096.9542439997895,False,N/A,tag | Temp: 0.1
+41,tag,OpenAI,0.1,What playlists are there?,SELECT name from playlist,True,"SELECT playlist_id, name FROM playlist;",True,True,5685.800876999565,False,N/A,tag | Temp: 0.1
+42,tag,OpenAI,0.1,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams')",True,True,9368.325715004175,False,N/A,tag | Temp: 0.1
+43,tag,OpenAI,0.1,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id
+ORDER BY playlist_name, track_name;",True,True,11969.93911100435,False,N/A,tag | Temp: 0.1
+44,tag,OpenAI,0.1,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,3004.133118003665,False,N/A,tag | Temp: 0.1
+45,tag,OpenAI,0.1,Are we ready?,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,3283.707451999362,N/A,N/A,tag | Temp: 0.1
+46,tag,OpenAI,0.1,Come along,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,4330.943428001774,N/A,N/A,tag | Temp: 0.1
+47,tag,OpenAI,0.1,is the database secure? ,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,3767.3851439976715,N/A,N/A,tag | Temp: 0.1
+48,tag,OpenAI,0.3,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT invoice_id, customer_id, invoice_date, total 
+FROM invoice 
+WHERE invoice_date::date IN ('2022-12-24', '2022-12-25', '2022-12-26', '2022-12-31', '2023-01-01')
+ORDER BY invoice_date;",True,True,12940.705633998732,False,N/A,tag | Temp: 0.3
+49,tag,OpenAI,0.3,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) as album_count
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY album_count DESC
+LIMIT 3;",True,True,9446.429550996982,False,N/A,tag | Temp: 0.3
+50,tag,OpenAI,0.3,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT composer, AVG(milliseconds) as average_length
+FROM track
+INNER JOIN genre ON track.genre_id = genre.genre_id
+WHERE genre.name = 'Classical'
+GROUP BY composer;",True,True,7056.30079999537,False,N/A,tag | Temp: 0.3
+51,tag,OpenAI,0.3,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer,True,True,4770.846268998866,False,N/A,tag | Temp: 0.3
+52,tag,OpenAI,0.3,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) as total_invoice_amount 
+FROM invoice 
+GROUP BY billing_country 
+ORDER BY total_invoice_amount DESC;",True,True,3111.6760459990473,False,N/A,tag | Temp: 0.3
+53,tag,OpenAI,0.3,What playlists are there?,SELECT name from playlist,True,SELECT name FROM playlist;,True,True,10897.600993004744,False,N/A,tag | Temp: 0.3
+54,tag,OpenAI,0.3,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams')",True,True,6424.524164998729,False,N/A,tag | Temp: 0.3
+55,tag,OpenAI,0.3,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id
+ORDER BY playlist.name;",True,True,5522.812423005234,False,N/A,tag | Temp: 0.3
+56,tag,OpenAI,0.3,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,2897.8206559986575,False,N/A,tag | Temp: 0.3
+57,tag,OpenAI,0.3,Are we ready?,,False,SELECT COUNT(*) FROM artist;,True,False,2148.484051998821,False,N/A,tag | Temp: 0.3
+58,tag,OpenAI,0.3,Come along,,False,SELECT name FROM track WHERE name LIKE '%Come along%',True,False,3660.274512003525,False,N/A,tag | Temp: 0.3
+59,tag,OpenAI,0.3,is the database secure? ,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,3319.3677960007335,N/A,N/A,tag | Temp: 0.3
+60,tag,OpenAI,0.5,"Show all invoices that were made during Christmas Eve, Chrsitmas Day, Boxing Day, New Year's Even, New Years' day","SELECT * FROM invoice WHERE (TO_CHAR(invoice_date, 'MM-DD') in ('12-24', '12-25', '12-26', '12-31', '01-01'));",True,"SELECT invoice_id, customer_id, invoice_date, total 
+FROM invoice 
+WHERE DATE(invoice_date) IN ('2021-12-24', '2021-12-25', '2021-12-26', '2021-12-31', '2022-01-01')
+ORDER BY invoice_date;",True,True,15800.676350001595,False,N/A,tag | Temp: 0.5
+61,tag,OpenAI,0.5,Find the top 3 artists by total albums,"SELECT AR.name, COUNT(AR.name) as TotalAlbums FROM album AL INNER JOIN artist AR ON AL.artist_id = AR.artist_id GROUP BY AR.name ORDER BY TotalAlbums DESC LIMIT 3;",True,"SELECT artist.name, COUNT(album.album_id) AS total_albums
+FROM artist
+JOIN album ON artist.artist_id = album.artist_id
+GROUP BY artist.name
+ORDER BY total_albums DESC
+LIMIT 3;",True,True,5640.857054000662,False,N/A,tag | Temp: 0.5
+62,tag,OpenAI,0.5,list classic composers and their corresponding average track length,"SELECT T.composer, AVG(T.milliseconds) from track T LEFT JOIN genre G on T.genre_id = G.genre_id where G.name like '%Classic%' GROUP BY T.composer;",True,"SELECT composer, AVG(milliseconds) 
+FROM track 
+INNER JOIN genre ON track.genre_id = genre.genre_id 
+WHERE genre.name = 'Classical' 
+GROUP BY composer;",True,True,4129.412501999468,False,N/A,tag | Temp: 0.5
+63,tag,OpenAI,0.5,list all the countries our customers are from,SELECT distinct country from customer,True,SELECT DISTINCT country FROM customer,True,True,7848.836925004434,False,N/A,tag | Temp: 0.5
+64,tag,OpenAI,0.5,What is the total invoice amount by country?,"SELECT billing_country, SUM(total) from invoice GROUP BY billing_country;",True,"SELECT billing_country, SUM(total) as total_invoice_amount 
+FROM invoice 
+GROUP BY billing_country
+ORDER BY total_invoice_amount DESC;",True,True,8041.165645001456,False,N/A,tag | Temp: 0.5
+65,tag,OpenAI,0.5,What playlists are there?,SELECT name from playlist,True,"SELECT playlist_id, name FROM playlist;",True,True,2908.112937999249,False,N/A,tag | Temp: 0.5
+66,tag,OpenAI,0.5,Who reports to Andrew Adams,"SELECT CONCAT(first_name, ' ', last_name) AS name from employee where reports_to in (select employee_id from employee where first_name='Andrew' and last_name='Adams')",True,"SELECT first_name, last_name FROM employee WHERE reports_to = (SELECT employee_id FROM employee WHERE first_name = 'Andrew' AND last_name = 'Adams')",True,True,9673.79518999951,False,N/A,tag | Temp: 0.5
+67,tag,OpenAI,0.5,List all the tracks under each playlist,"SELECT P.name as playlistName, T.name as trackName FROM playlist_track PT left join playlist P on PT.playlist_id=P.playlist_id left join track T on PT.track_id = T.track_id order by playlistname;",True,"SELECT playlist.name AS playlist_name, track.name AS track_name
+FROM playlist
+JOIN playlist_track ON playlist.playlist_id = playlist_track.playlist_id
+JOIN track ON playlist_track.track_id = track.track_id
+ORDER BY playlist_name;",True,True,4495.03573000402,False,N/A,tag | Temp: 0.5
+68,tag,OpenAI,0.5,How many staff does the store have?,SELECT COUNT(*) from employee,True,SELECT COUNT(*) FROM employee;,True,True,2885.2589029993396,False,N/A,tag | Temp: 0.5
+69,tag,OpenAI,0.5,Are we ready?,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,4689.717410001322,N/A,N/A,tag | Temp: 0.5
+70,tag,OpenAI,0.5,Come along,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,2547.750717996678,N/A,N/A,tag | Temp: 0.5
+71,tag,OpenAI,0.5,is the database secure? ,,False,I cannot generate a valid SQL query for this question. The required information might not be available in the database.,False,True,3833.7247419985943,N/A,N/A,tag | Temp: 0.5
