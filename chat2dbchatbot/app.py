@@ -12,6 +12,8 @@ load_dotenv()
 #import openai
 import asyncio
 
+import pickle
+from pathlib import Path
 
 @dataclass
 class ChatConfig:
@@ -42,6 +44,56 @@ class ChatDatabase:
         except Exception as e:
             st.error(f"Error connecting to SQL database: {str(e)}")
             self.chat_db_manager = None
+
+        # Load classifier model
+        self.classifier = self.load_classifier()            
+
+    def load_classifier(self):
+        """Load the classifier model from a pickle file."""
+        current_dir = Path(__file__).parent
+        model_path = current_dir / 'classifier/combined_sql_classifier.pkl'
+        with open(model_path, 'rb') as file:
+            objects = pickle.load(file)
+        return objects
+
+    def classify_prompt(self, prompt):
+        """Classify the prompt using the loaded classifier."""
+        vectorizer = self.classifier["vectorizer"]
+        binary_classifier = self.classifier["binary_classifier"]
+        classifier_domain = self.classifier["classifier_domain"]
+        classifier_complexity = self.classifier["classifier_complexity"]
+        classifier_task_type = self.classifier["classifier_task_type"]
+        label_encoder_domain = self.classifier["label_encoder_domain"]
+        label_encoder_complexity = self.classifier["label_encoder_complexity"]
+        label_encoder_task_type = self.classifier["label_encoder_task_type"]
+
+        # Transform the prompt using the vectorizer
+        prompt_tfidf = vectorizer.transform([prompt])
+
+        # Binary Classification (SQL vs Non-SQL)
+        is_sql = binary_classifier.predict(prompt_tfidf)[0]
+
+        # If not SQL, return early
+        if is_sql == 0:
+            print("Classification Results: Non-SQL Query")
+            return False
+
+        # Predict using the classifiers
+        domain_prediction = classifier_domain.predict(prompt_tfidf)[0]
+        complexity_prediction = classifier_complexity.predict(prompt_tfidf)[0]
+        task_type_prediction = classifier_task_type.predict(prompt_tfidf)[0]
+
+        # Decode predictions
+        domain = label_encoder_domain.inverse_transform([domain_prediction])[0]
+        complexity = label_encoder_complexity.inverse_transform([complexity_prediction])[0]
+        task_type = label_encoder_task_type.inverse_transform([task_type_prediction])[0]
+
+        print("Classification Results: SQL Query")
+        print(f"Domain: {domain}")
+        print(f"Complexity: {complexity}")
+        print(f"Task Type: {task_type}")
+
+        return True
 
     def rag_pipeline(self, query: str, config: ChatConfig) -> str:
         """RAG pipeline for database queries"""
@@ -105,11 +157,15 @@ class ChatDatabase:
             return f"Error in TAG pipeline: {str(e)}"
 
 def main():
+    # Session state for the chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    # Session state initialization for the Intent Classifier toggle
+    if "intent_classifier_enabled" not in st.session_state:
+        st.session_state.intent_classifier_enabled = False
+
     # Streamlit UI
     st.title("🤖 Chat To Your Database 🤖")
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = []    
 
     with st.sidebar:    
         interaction_method = st.selectbox(
@@ -133,11 +189,11 @@ def main():
                 step=0.1
             )
             #intent classifier toggle
-            intent_classifier_enabled = st.toggle(
+            st.session_state.intent_classifier_enabled = st.toggle(
                 "Intent Classifier",
                 value=st.session_state.intent_classifier_enabled,
                 help="Enable/disable intent classification"
-            )
+            )         
 
     # Initialize chat interface
     chat = ChatDatabase()
@@ -156,37 +212,27 @@ def main():
         with st.spinner("Processing your question..."):
             # Check intent first
             #llm = chat.get_llm(config)
-            #if st.session_state.intent_classifier_enabled and not chat.intent_classifier(query, llm):
-            if not True:    
-                response = "This question doesn't appear to be database-related."
-                st.session_state.messages.append({"role": "classifier", "content": response})
-                st.chat_message("assistant").write(response)
-                return
-
+            should_process_llm = True
+            if st.session_state.intent_classifier_enabled:
+                # Only check classification if the classifier is enabled
+                should_process_llm = chat.classify_prompt(query)
+                if not should_process_llm:
+                    st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": "Message from Classifier: This question doesn't appear to be database-related."
+                    })
+            
+            if should_process_llm:
             # Process query based on selected method
-            response = (
-                chat.rag_pipeline(query, config) if interaction_method == "RAG"
-                else asyncio.run(chat.tag_pipeline(query, config))
-            )
-
-        # Add assistant response to chat history
-        # The response.response object or str(response) contains the LLM answer
-#        st.session_state.messages.append({"role": "assistant", "content": response})
-        
-        # Display chat history
-#        for message in st.session_state.messages:
-#            with st.chat_message(message["role"]):
-#                st.write(message["content"])
-                # Print only the response.response
-#                if message["role"] == "assistant":
-#                    st.write(f"{message['role']}: {message['content']}")
-
-        # If it's an error message or custom string
-        if isinstance(response, str):
-            st.session_state.messages.append({"role": "assistant", "content": response})
-        # If it's a regular Response object
-        else:
-            st.session_state.messages.append({"role": "assistant", "content": response.response})
+                response = (
+                    chat.rag_pipeline(query, config) if interaction_method == "RAG"
+                    else asyncio.run(chat.tag_pipeline(query, config))
+                )
+                # Add assistant response to chat history             
+                if isinstance(response, str): # If it's an error message or custom string
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else: # If it's a regular Response object
+                    st.session_state.messages.append({"role": "assistant", "content": response.response})
 
     # Display the entire chat history
     for message in st.session_state.messages:
@@ -194,9 +240,6 @@ def main():
             st.write(message["content"])
 
 if __name__ == "__main__":
-#    if "messages" not in st.session_state:
-#        st.session_state.messages = []
-
     # Session state initialization for the Intent Classifier toggle
     if "intent_classifier_enabled" not in st.session_state:
         st.session_state.intent_classifier_enabled = False

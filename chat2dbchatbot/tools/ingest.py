@@ -16,13 +16,16 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Set TOKENIZERS_PARALLELISM to false to avoid deadlocks
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 # Embedding model configuration
 Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 # Use no LLM model
 #Settings.llm = None
 
-# Explicitly set the environment variable TOKENIZERS_PARALLELISM to false
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 class VectorSearch:
     def __init__(self, db_manager: DatabaseManager):
