@@ -15,7 +15,6 @@ import asyncio
 import pickle
 from pathlib import Path
 
-
 @dataclass
 class ChatConfig:
     """Configuration for chat application"""
@@ -158,11 +157,15 @@ class ChatDatabase:
             return f"Error in TAG pipeline: {str(e)}"
 
 def main():
+    # Session state for the chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    # Session state initialization for the Intent Classifier toggle
+    if "intent_classifier_enabled" not in st.session_state:
+        st.session_state.intent_classifier_enabled = False
+
     # Streamlit UI
     st.title("🤖 Chat To Your Database 🤖")
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = []    
 
     with st.sidebar:    
         interaction_method = st.selectbox(
@@ -186,11 +189,11 @@ def main():
                 step=0.1
             )
             #intent classifier toggle
-            intent_classifier_enabled = st.toggle(
+            st.session_state.intent_classifier_enabled = st.toggle(
                 "Intent Classifier",
                 value=st.session_state.intent_classifier_enabled,
                 help="Enable/disable intent classification"
-            )
+            )         
 
     # Initialize chat interface
     chat = ChatDatabase()
@@ -209,38 +212,27 @@ def main():
         with st.spinner("Processing your question..."):
             # Check intent first
             #llm = chat.get_llm(config)
-#            if not (st.session_state.intent_classifier_enabled and chat.classify_prompt(query)):
-            if not True:
-#                response = "Message from Classifier: This question doesn't appear to be database-related."
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                st.chat_message("assistant").write(response)
-                return
-#            else:
-
+            should_process_llm = True
+            if st.session_state.intent_classifier_enabled:
+                # Only check classification if the classifier is enabled
+                should_process_llm = chat.classify_prompt(query)
+                if not should_process_llm:
+                    st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": "Message from Classifier: This question doesn't appear to be database-related."
+                    })
+            
+            if should_process_llm:
             # Process query based on selected method
-            response = (
-                chat.rag_pipeline(query, config) if interaction_method == "RAG"
-                else asyncio.run(chat.tag_pipeline(query, config))
-            )
-
-        # Add assistant response to chat history
-        # The response.response object or str(response) contains the LLM answer
-#        st.session_state.messages.append({"role": "assistant", "content": response})
-        
-        # Display chat history
-#        for message in st.session_state.messages:
-#            with st.chat_message(message["role"]):
-#                st.write(message["content"])
-                # Print only the response.response
-#                if message["role"] == "assistant":
-#                    st.write(f"{message['role']}: {message['content']}")
-
-        # If it's an error message or custom string
-        if isinstance(response, str):
-            st.session_state.messages.append({"role": "assistant", "content": response})
-        # If it's a regular Response object
-        else:
-            st.session_state.messages.append({"role": "assistant", "content": response.response})
+                response = (
+                    chat.rag_pipeline(query, config) if interaction_method == "RAG"
+                    else asyncio.run(chat.tag_pipeline(query, config))
+                )
+                # Add assistant response to chat history             
+                if isinstance(response, str): # If it's an error message or custom string
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else: # If it's a regular Response object
+                    st.session_state.messages.append({"role": "assistant", "content": response.response})
 
     # Display the entire chat history
     for message in st.session_state.messages:
@@ -248,9 +240,6 @@ def main():
             st.write(message["content"])
 
 if __name__ == "__main__":
-#    if "messages" not in st.session_state:
-#        st.session_state.messages = []
-
     # Session state initialization for the Intent Classifier toggle
     if "intent_classifier_enabled" not in st.session_state:
         st.session_state.intent_classifier_enabled = False
