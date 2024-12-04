@@ -9,20 +9,19 @@ from tools.tag import create_tag_pipeline # TAG
 # Load environment variables
 load_dotenv()
 
-#import openai
 import asyncio
 
 import pickle
 from pathlib import Path
+
+from langfuse.llama_index import LlamaIndexInstrumentor
 
 @dataclass
 class ChatConfig:
     """Configuration for chat application"""
     interaction_method: str
     llm_provider: str
-    #model_name: str = "gpt-3.5-turbo"
     openai_model_name: str = "gpt-4"
-    #claude_model_name: str = "claude-3-opus-20240229"
     claude_model_name: str = "claude-3-5-sonnet-20241022"
     temperature: float = 0.1
 
@@ -46,7 +45,13 @@ class ChatDatabase:
             self.chat_db_manager = None
 
         # Load classifier model
-        self.classifier = self.load_classifier()            
+        self.classifier = self.load_classifier()
+        
+        # Initialize Langfuse instrumentor
+        self.instrumentor = LlamaIndexInstrumentor()
+        self.instrumentor.start()
+        print("Langfuse instrumentor checkpoint: Disregard Langfuse error messages on dev mode.")        
+
 
     def load_classifier(self):
         """Load the classifier model from a pickle file."""
@@ -98,7 +103,6 @@ class ChatDatabase:
     def rag_pipeline(self, query: str, config: ChatConfig) -> str:
         """RAG pipeline for database queries"""
         try:
-            #rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager)
             rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager, config=config)
 
             response = rag_search.query(f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}")
@@ -110,9 +114,7 @@ class ChatDatabase:
             print("App.py SQL Result:- ", sql_result)
 
             return sql_result
-        #except Exception as e:
-        #    st.error(f"Error in RAG pipeline: {str(e)}")
-        #    return None
+        
         except Exception as e:
             return f"Error in RAG pipeline: {str(e)}"        
 
@@ -133,25 +135,10 @@ class ChatDatabase:
             
             # Execute workflow
             handler = tag_workflow.run(query=query)
-            
-            # Stream events if workflow is verbose
-    #        if tag_workflow._verbose:
-    #            async for event in handler.stream_events():
-    #                if isinstance(event, QuerySynthesisEvent):
-    #                    st.write("Generated SQL:", event.sql_query)
-    #                elif isinstance(event, QueryExecutionEvent):
-    #                    st.write("Query Results:", event.results)
                         
             # Get final response
             response = await handler
             return str(response)
-
-            # Get final response with timeout
-#            try:
-#                response = await asyncio.wait_for(handler, timeout=120.0)
-#                return str(response)
-#            except asyncio.TimeoutError:
-#                return "The operation timed out. Please try again or simplify your query."
 
         except Exception as e:
             return f"Error in TAG pipeline: {str(e)}"
@@ -211,7 +198,6 @@ def main():
         
         with st.spinner("Processing your question..."):
             # Check intent first
-            #llm = chat.get_llm(config)
             should_process_llm = True
             if st.session_state.intent_classifier_enabled:
                 # Only check classification if the classifier is enabled

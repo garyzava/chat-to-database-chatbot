@@ -13,19 +13,6 @@ from llama_index.llms.anthropic import Anthropic
 from dotenv import load_dotenv
 load_dotenv()
 
-#langfuse not working
-#from llama_index.core import Settings
-#from llama_index.core.callbacks import CallbackManager
-#from langfuse.llama_index import LlamaIndexCallbackHandler
-#import os
-#langfuse_callback_handler = LlamaIndexCallbackHandler(
-#    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-#    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-#    host=os.getenv("LANGFUSE_HOST")
-#)
-#Settings.callback_manager = CallbackManager([langfuse_callback_handler])
-
-
 class RAGSearch(VectorSearch):
     def __init__(self, vec_db_manager, chat_db_manager, config, *args, **kwargs):
         super().__init__(vec_db_manager, *args, **kwargs)
@@ -40,16 +27,11 @@ class RAGSearch(VectorSearch):
 
     def query(self, query_text: str) -> str:
         """Query the vector index"""
-#
-#        from langfuse.llama_index import LlamaIndexInstrumentor
-#        instrumentor = LlamaIndexInstrumentor()
-#        instrumentor.start()
-#
+
         index = self.load_index()
         query_engine = index.as_query_engine(llm=self.llm)
         response = query_engine.query(query_text)
 
- #       instrumentor.flush()
         return response
 
     def sql_query(self, query_text: str) -> str:
@@ -148,18 +130,7 @@ def parse_args():
 def main():
     os.environ['ENV'] = 'dev'
     args = parse_args()
-    #run_rag_pipeline(args.query, args.llm, args.temperature)
-
-    try:
-        result = run_rag_pipeline(
-            query=args.query,
-            llm_provider=args.llm,
-            temperature=args.temperature
-        )
-    except Exception as e:
-        print(f"Error: {e}")
-        return 1
-    return 0    
+    run_rag_pipeline(args.query, args.llm, args.temperature)
 
 if __name__ == "__main__":
     import sys

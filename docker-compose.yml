@@ -37,6 +37,7 @@ services:
       timeout: 3s
       retries: 10
 
+  # langfuse for LLM Analytics
   langfuse:
      image: langfuse/langfuse:2
      environment:
@@ -45,12 +46,17 @@ services:
        NEXTAUTH_SECRET: mysecret
        SALT: mysalt
        ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-       LANGFUSE_INIT_ORG_ID: my-org
-       LANGFUSE_INIT_PROJECT_ID: my-project
-       LANGFUSE_INIT_PROJECT_PUBLIC_KEY: lf_pk_1234567890
-       LANGFUSE_INIT_PROJECT_SECRET_KEY: lf_sk_1234567890
-       LANGFUSE_INIT_EMAIL: admin@example.com
-       LANGFUSE_INIT_PASSWORD: adminpassword      
+       TELEMETRY_ENABLED: false
+       LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: false
+       LANGFUSE_INIT_ORG_ID: chat2db-organization
+       LANGFUSE_INIT_ORG_NAME: Chat2db Organization
+       LANGFUSE_INIT_PROJECT_ID: chat2db-project
+       LANGFUSE_INIT_PROJECT_NAME: Chat2db Project
+       LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-6dca9fac-db43-4d97-8043-f7b0e5c2d7f7
+       LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-7826e99b-3f42-4589-8cea-21b1e3c3c868
+       LANGFUSE_INIT_USER_EMAIL: demo@example.com
+       LANGFUSE_INIT_USER_NAME: Demo
+       LANGFUSE_INIT_USER_PASSWORD: demo-only
      ports:
        - "3000:3000"
      depends_on:
