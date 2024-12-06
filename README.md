@@ -60,7 +60,7 @@ make run
 
 After the installation, simply run:
 ```bash
-make rup
+make up
 ```
 
 4. Or run the application in developer mode:
