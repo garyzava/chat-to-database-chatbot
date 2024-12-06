@@ -22,8 +22,6 @@ from typing import List, Union
 from dotenv import load_dotenv
 load_dotenv()
 
-#os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 class QuerySynthesisEvent(Event):
     """Event containing synthesized SQL query"""
     sql_query: str
@@ -174,9 +172,9 @@ class TAGWorkflow(Workflow):
             SQL Query Used: {ev.sql_query}
             Query Results: {result_str}
             """
-            
+
             response = await self.llm.acomplete(prompt)
-            
+
             return StopEvent(result=str(response))
             
         except Exception as e:
@@ -199,7 +197,7 @@ def create_tag_pipeline(vec_db_manager, chat_db_manager, config):
             model=config.claude_model_name,
             temperature=config.temperature
         )
-        
+
     workflow = TAGWorkflow(
         vec_db_manager=vec_db_manager,
         chat_db_manager=chat_db_manager,
@@ -207,9 +205,8 @@ def create_tag_pipeline(vec_db_manager, chat_db_manager, config):
         verbose=True
         ,timeout=None # No timeout for now
     )
-    
-    return workflow
 
+    return workflow
 
 async def run_tag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: float = 0.1) -> str:
     """Run the TAG pipeline with given parameters"""
@@ -243,7 +240,7 @@ async def run_tag_pipeline(query: str, llm_provider: str = "OpenAI", temperature
         verbose=True,
         timeout=None  # No timeout for now
     )
-    
+
     try:
         result = await workflow.run(query=query)
         print(f"Final Result: {result}")
@@ -252,26 +249,24 @@ async def run_tag_pipeline(query: str, llm_provider: str = "OpenAI", temperature
         print(f"Error running TAG pipeline: {e}")
         return None
 
-async def main():
-    os.environ['ENV'] = 'dev'
+def tag_parse_args():
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='TAG Pipeline CLI')
     parser.add_argument('query', help='Natural language query for the database')
     parser.add_argument('--llm', default='OpenAI', choices=['OpenAI', 'Claude'],
-                       help='LLM provider to use (default: OpenAI)')
+                      help='LLM provider to use (default: OpenAI)')
     parser.add_argument('--temperature', type=float, default=0.1,
-                       help='Temperature for LLM (default: 0.1)')
-    
-    args = parser.parse_args()
+                      help='Temperature for LLM (default: 0.1)')
 
+    return parser.parse_args()
+
+async def main():
+    os.environ['ENV'] = 'dev'
+    args = tag_parse_args()
     try:
-        result = await run_tag_pipeline(
-            query=args.query,
-            llm_provider=args.llm,
-            temperature=args.temperature
-        )
-        #print(f"Final Result: {result}")
+        await run_tag_pipeline(args.query, args.llm, args.temperature)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in RAG main(): {e}")
         return 1
     return 0
 

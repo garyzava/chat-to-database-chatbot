@@ -50,41 +50,6 @@ class RAGSearch(VectorSearch):
         response = query_engine.query(query_text)
         return response
 
-def run_rag_pipeline_bkp(query: str, llm_provider: str = "OpenAI", temperature: float = 0.1) -> str:
-    """Run the RAG pipeline with given parameters."""
-    # Database setup
-    vec_db_manager = DatabaseManager(db_type='vecdb')
-    chat_db_manager = DatabaseManager(db_type='db')
-
-    if not vec_db_manager.test_connection():
-        raise ConnectionError("Vector Database connection failed")
-    if not chat_db_manager.test_connection():
-        raise ConnectionError("Database connection failed")    
-        
-    # Initialize RAGSearch
-    config = type('Config', (), {
-        'llm_provider': llm_provider,
-        'temperature': temperature,
-        'openai_model_name': 'gpt-4',
-        'claude_model_name': 'claude-3-sonnet-20240229'
-    })()
-
-    rag_search = RAGSearch(
-        vec_db_manager, 
-        chat_db_manager, 
-        config=config
-    )
-    
-    # Generate and execute query
-    sql_query = rag_search.query(
-        f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}"
-    )
-    print(f"Generated SQL: {sql_query}")
-    
-    sql_result = rag_search.sql_query(str(sql_query))
-    
-    return sql_result
-
 def run_rag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: float = 0.1) -> str:
     """Run the RAG pipeline with given parameters."""
     # Create config
@@ -94,7 +59,7 @@ def run_rag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: floa
         'openai_model_name': 'gpt-4',
         'claude_model_name': 'claude-3-sonnet-20240229'
     })()
-    
+
     # Initialize databases
     vec_db_manager = DatabaseManager(db_type='vecdb')
     chat_db_manager = DatabaseManager(db_type='db')
@@ -116,7 +81,7 @@ def run_rag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: floa
     sql_result = rag_search.sql_query(str(sql_query))
     print(f"Final Result: {sql_result}")
 
-def parse_args():
+def rag_parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='RAG Pipeline CLI')
     parser.add_argument('query', help='Natural language query for the database')
@@ -125,12 +90,17 @@ def parse_args():
     parser.add_argument('--temperature', type=float, default=0.1,
                       help='Temperature for LLM (default: 0.1)')
 
-    return parser.parse_args()    
+    return parser.parse_args()
 
 def main():
     os.environ['ENV'] = 'dev'
-    args = parse_args()
-    run_rag_pipeline(args.query, args.llm, args.temperature)
+    args = rag_parse_args()
+    try:
+        run_rag_pipeline(args.query, args.llm, args.temperature)
+    except Exception as e:
+        print(f"Error in RAG main(): {e}")
+        return 1
+    return 0
 
 if __name__ == "__main__":
     import sys
