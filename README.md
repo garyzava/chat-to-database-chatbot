@@ -103,3 +103,8 @@ python -m tools.tag "what is the track with the most revenue" --llm OpenAI --tem
 - **Observability**: [Langfuse](https://langfuse.com/docs)
 - **LLM Framework**: [LlamaIndex](https://docs.llamaindex.ai/)
 - **Container Orchestration**: [Docker Compose](https://docs.docker.com/compose/)
+
+### References
+
+- **RAG (Retrieval-Augmented Generation)**: [Paper by Facebook AI](https://arxiv.org/abs/2005.11401)
+- **TAG (Table-Augmented Generation)**: [Paper by UC Berkeley & Stanford University](https://arxiv.org/pdf/2408.14717)
