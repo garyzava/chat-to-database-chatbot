@@ -1,4 +1,5 @@
 import os
+import re
 from tools.ingestsql import VectorSearch
 from tools.db import DatabaseManager
 
@@ -13,18 +14,8 @@ from llama_index.llms.anthropic import Anthropic
 from dotenv import load_dotenv
 load_dotenv()
 
-#langfuse not working
-#from llama_index.core import Settings
-#from llama_index.core.callbacks import CallbackManager
-#from langfuse.llama_index import LlamaIndexCallbackHandler
-#import os
-#langfuse_callback_handler = LlamaIndexCallbackHandler(
-#    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-#    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-#    host=os.getenv("LANGFUSE_HOST")
-#)
-#Settings.callback_manager = CallbackManager([langfuse_callback_handler])
-
+def is_null_or_empty(s):
+    return s is None or s.strip() == ""
 
 class RAGSearch(VectorSearch):
     def __init__(self, vec_db_manager, chat_db_manager, config, *args, **kwargs):
@@ -40,70 +31,60 @@ class RAGSearch(VectorSearch):
 
     def query(self, query_text: str) -> str:
         """Query the vector index"""
-#
-#        from langfuse.llama_index import LlamaIndexInstrumentor
-#        instrumentor = LlamaIndexInstrumentor()
-#        instrumentor.start()
-#
+
         index = self.load_index()
         query_engine = index.as_query_engine(llm=self.llm)
         response = query_engine.query(query_text)
-
- #       instrumentor.flush()
-        return response
-
-    def sql_query(self, query_text: str) -> str:
-        """Perform a text-to-SQL query on the connected database."""
-
-        conn =  create_engine(self.chat_db_manager.get_connection_string())
-
-        sql_database = SQLDatabase(conn)
-        table_names = self.chat_db_manager.get_table_names()
-        query_engine = NLSQLTableQueryEngine(
-            sql_database=sql_database, 
-            tables=table_names,
-            sql_only=False,
-            llm=self.llm
-        )
-        response = query_engine.query(query_text)
-        return response
-
-def run_rag_pipeline_bkp(query: str, llm_provider: str = "OpenAI", temperature: float = 0.1) -> str:
-    """Run the RAG pipeline with given parameters."""
-    # Database setup
-    vec_db_manager = DatabaseManager(db_type='vecdb')
-    chat_db_manager = DatabaseManager(db_type='db')
-
-    if not vec_db_manager.test_connection():
-        raise ConnectionError("Vector Database connection failed")
-    if not chat_db_manager.test_connection():
-        raise ConnectionError("Database connection failed")    
         
-    # Initialize RAGSearch
-    config = type('Config', (), {
-        'llm_provider': llm_provider,
-        'temperature': temperature,
-        'openai_model_name': 'gpt-4',
-        'claude_model_name': 'claude-3-sonnet-20240229'
-    })()
+        return response
+    
+def extract_sql_query(response_text: str) -> str:
+    """
+    Find the first continuous block of SQL-like text
+    """
+    sql_lines = []
+    in_sql_block = False
+    for line in response_text.split('\n'):
+        line = line.strip()
+        if line.upper().startswith('SELECT ') or line.upper().startswith('WITH '):
+            in_sql_block = True
+        
+        if in_sql_block:
+            sql_lines.append(line)
+            if line.endswith(';'):
+                break
+        
+        # Join and clean the SQL query
+        sql_query = ' '.join(sql_lines)
+        sql_query = re.sub(r'\s+', ' ', sql_query).strip()
 
-    rag_search = RAGSearch(
-        vec_db_manager, 
-        chat_db_manager, 
-        config=config
-    )
+def extract_sql_query_o(response_text: str) -> str:
+        """
+        Look for SQL query between code blocks (```sql or ```)
+        """
+        # Strategy 1: Extract from code blocks
+        code_block_patterns = [
+            r'```sql(.*?)```',  # Markdown code block with sql
+            r'```(.*?)```',     # Generic code block
+            r'`(SELECT.*?);`',  # Inline code with SQL
+        ]
+        
+        for pattern in code_block_patterns:
+            match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+            
+def extract_sql_query_t(response_text: str) -> str:
+        """
+        Use regex to find SQL-like statements
+        """
+        sql_pattern = r'(SELECT\s+.*?;)'
+        match = re.search(sql_pattern, response_text, re.DOTALL | re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        else:
+            return ""
     
-    # Generate and execute query
-    sql_query = rag_search.query(
-        f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}"
-    )
-    # print(f"Generated SQL: {sql_query}")
-    
-    # sql_result = rag_search.sql_query(str(sql_query))
-
-    sql_generated = str(sql_query)
-    
-    return sql_generated
 
 def run_rag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: float = 0.1) -> str:
     """Run the RAG pipeline with given parameters."""
@@ -131,40 +112,14 @@ def run_rag_pipeline(query: str, llm_provider: str = "OpenAI", temperature: floa
     sql_query = rag_search.query(
         f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}"
     )
-    # print(f"Generated SQL: {sql_query}")
-    
-    # sql_result = rag_search.sql_query(str(sql_query))
-    # print(f"Final Result: {sql_result}")
-    return str(sql_query)
 
-def parse_args():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description='RAG Pipeline CLI')
-    parser.add_argument('query', help='Natural language query for the database')
-    parser.add_argument('--llm', default='OpenAI', choices=['OpenAI', 'Claude'],
-                      help='LLM provider to use (default: OpenAI)')
-    parser.add_argument('--temperature', type=float, default=0.1,
-                      help='Temperature for LLM (default: 0.1)')
+    sql_query_str = str(sql_query)
 
-    return parser.parse_args()    
-
-def main():
-    os.environ['ENV'] = 'dev'
-    args = parse_args()
-    run_rag_pipeline(args.query, args.llm, args.temperature)
-
-    try:
-        result = run_rag_pipeline(
-            query=args.query,
-            llm_provider=args.llm,
-            temperature=args.temperature
-        )
-    except Exception as e:
-        print(f"Error: {e}")
-        return 1
-    return 0    
-
-if __name__ == "__main__":
-    import sys
-    import argparse
-    sys.exit(main())
+    if(llm_provider == "OpenAI"):
+        return sql_query_str
+    else:
+        extracted = extract_sql_query_t(sql_query_str)
+        if is_null_or_empty(extracted):
+            return "no sql"
+        else: 
+            return extracted
