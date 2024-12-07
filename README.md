@@ -91,9 +91,11 @@ python -m tools.tag "what is the track with the most revenue" --llm OpenAI --tem
 
 ## Chatbot Usage
 
-1. Select your preferred interaction method (RAG, TAG)
-2. Choose an LLM provider (OpenAI or Claude)
-3. Start asking questions about your database
+1. Go to ```http://localhost:8501 ``` for the main chatbot interface
+2. Select your preferred interaction method (RAG, TAG)
+3. Choose an LLM provider (OpenAI or Claude)
+4. Start asking questions about your database
+5. Go to ```http://localhost:3000 ``` for the Langfuse interface when not running on dev mode
 
 ## Architecture
 
