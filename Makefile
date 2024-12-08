@@ -24,10 +24,9 @@ install: venv
 # Start necessary services for development
 dev_services:
 	docker compose up -d postgres vecdb
-#	docker compose --profile dev up -d postgres vecdb langfuse-dev
-#	docker compose up -d postgres vecdb langfuse-dev
 
-# Docker targets
+# Docker targets:
+
 # Build the Docker image
 build:
 	docker compose build
