@@ -118,7 +118,7 @@ This project uses the Chinook database, a media store database, for development 
 
 - **Chinook Database**:
   - **Ownership**: Maintained by [lerocha](https://github.com/lerocha)
-  - **Licenses and Use**: The Chinook Database is distributed under the MIT License, allowing use, distribution, and modification.
+  - **Licenses and Use**: The Chinook Database allows use, distribution, and modification without any warranty of any kind.
   - **Access**: Available on GitHub at [https://github.com/lerocha/chinook-database](https://github.com/lerocha/chinook-database)
 
 The intent classifier piece uses data from the following datasets. Access to the data is subject to the respective terms:
