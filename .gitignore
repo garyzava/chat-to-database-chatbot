@@ -36,6 +36,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -165,4 +166,8 @@ cython_debug/
 vecdb/
 .DS_Store
 db/converted/
+
+.vscode/
+eval/draft.ipynb
 WIP_*
+eval/html_exports/
