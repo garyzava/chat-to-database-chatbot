@@ -114,7 +114,7 @@ python -m tools.tag "what is the track with the most revenue" --llm OpenAI --tem
 
 ## Data Source Statement
 
-This project uses a domain-specific database for development and testing purposes. But his can 
+This project uses the Chinook database, a media store database, for development and testing purposes. However, it can be easily adapted for any enterprise or domain-specific use case. 
 
 - **Chinook Database**:
   - **Ownership**: Maintained by [lerocha](https://github.com/lerocha)
