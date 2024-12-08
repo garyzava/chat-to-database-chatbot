@@ -27,7 +27,7 @@ A web chatbot interface for database interactions using natural language questio
 
 - Multiple interaction methods (RAG, TAG)
 - LLM provider selection (OpenAI, Claude)
-- Intent classification
+- Intent classification ([Details in Classifier README](./chat2dbchatbot/classifier/README-CLASSIFIER.md))
 - Vector search with PGVector
 - Langfuse Analytics
 - Conversation memory (until browser refresh)
@@ -106,7 +106,29 @@ python -m tools.tag "what is the track with the most revenue" --llm OpenAI --tem
 - **LLM Framework**: [LlamaIndex](https://docs.llamaindex.ai/)
 - **Container Orchestration**: [Docker Compose](https://docs.docker.com/compose/)
 
-### References
+## Paper References
 
 - **RAG (Retrieval-Augmented Generation)**: [Paper by Facebook AI](https://arxiv.org/abs/2005.11401)
 - **TAG (Table-Augmented Generation)**: [Paper by UC Berkeley & Stanford University](https://arxiv.org/pdf/2408.14717)
+
+
+## Data Source Statement
+
+This project uses a domain-specific database for development and testing purposes. But his can 
+
+- **Chinook Database**:
+  - **Ownership**: Maintained by [lerocha](https://github.com/lerocha)
+  - **Licenses and Use**: The Chinook Database is distributed under the MIT License, allowing use, distribution, and modification.
+  - **Access**: Available on GitHub at [https://github.com/lerocha/chinook-database](https://github.com/lerocha/chinook-database)
+
+The intent classifier piece uses data from the following datasets. Access to the data is subject to the respective terms:
+
+- **GretelAI Synthetic Text-to-SQL**:
+  - **Ownership**: Gretel.ai
+  - **Licenses and Use**: Licensed under the Apache License 2.0, permitting use, distribution, and modification with proper attribution.
+  - **Access**: Available on Hugging Face at [https://huggingface.co/datasets/gretelai/synthetic_text_to_sql](https://huggingface.co/datasets/gretelai/synthetic_text_to_sql)
+
+- **Factoid WebQuestions Dataset**:
+  - **Ownership**: WebQuestions (http://nlp.stanford.edu/software/sempre/ - Berant et al., 2013, CC-BY)
+  - **Licenses and Use**: Distributed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license, allowing sharing and adaptation with appropriate credit.
+  - **Access**: Available on GitHub at [https://github.com/brmson/dataset-factoid-webquestions](https://github.com/brmson/dataset-factoid-webquestions)

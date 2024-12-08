@@ -1,6 +1,6 @@
 import streamlit as st
 from dataclasses import dataclass
-import os
+
 from dotenv import load_dotenv
 from tools.db import DatabaseManager
 from tools.rag import RAGSearch # RAG
@@ -15,6 +15,7 @@ import pickle
 from pathlib import Path
 
 from langfuse.llama_index import LlamaIndexInstrumentor
+from langfuse.decorators import langfuse_context, observe
 
 @dataclass
 class ChatConfig:
@@ -100,14 +101,18 @@ class ChatDatabase:
 
         return True
 
+
     def rag_pipeline(self, query: str, config: ChatConfig) -> str:
-        """RAG pipeline for database queries"""
+        """RAG pipeline for database queries
+            The following function is adapted from LlamaIndex's example repository:
+            https://docs.llamaindex.ai/en/stable/examples/        
+        """
         try:
             rag_search = RAGSearch(self.vec_db_manager, self.chat_db_manager, config=config)
 
             response = rag_search.query(f"You are Postgres expert. Generate a SQL based on the following question using the additional metadata given to you: {query}")
             print("App.py Generated response:- ", response)
-            sql_query = str(response).strip("`sql\n").strip("`") #not needed
+            sql_query = str(response).strip("`sql\n").strip("`") #optional
             print("App.py Generated SQL:- ", sql_query)
             # Execute SQL query
             sql_result = rag_search.sql_query(str(sql_query))
@@ -118,9 +123,14 @@ class ChatDatabase:
         except Exception as e:
             return f"Error in RAG pipeline: {str(e)}"        
 
-
+    @observe()
     async def tag_pipeline(self, query: str, config: ChatConfig) -> str:
-        """TAG pipeline for database queries"""
+        """TAG pipeline for database queries
+            The following function is adapted from LlamaIndex's workflow documenetation:
+            https://docs.llamaindex.ai/en/stable/examples/workflow/advanced_text_to_sql/
+            Additionally, this function uses Langfuse's documentation for integration with Llamaindex:
+            https://langfuse.com/docs/integrations/llama-index/get-started/        
+        """
         try:
             # Verify database connections
             if not self.vec_db_manager or not self.chat_db_manager:
@@ -132,14 +142,20 @@ class ChatDatabase:
                 chat_db_manager=self.chat_db_manager,
                 config=config
             )
-            
-            # Execute workflow
-            handler = tag_workflow.run(query=query)
-                        
-            # Get final response
-            response = await handler
-            return str(response)
 
+            current_trace_id = langfuse_context.get_current_trace_id()
+            current_observation_id = langfuse_context.get_current_observation_id()
+            with self.instrumentor.observe(
+                trace_id=current_trace_id,
+                parent_observation_id=current_observation_id,
+                update_parent=False,
+            ):
+                # Execute workflow
+                handler = tag_workflow.run(query=query)
+                # Get final response
+                response = await handler
+                return str(response)
+            
         except Exception as e:
             return f"Error in TAG pipeline: {str(e)}"
 
