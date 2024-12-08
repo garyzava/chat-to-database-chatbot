@@ -108,55 +108,62 @@ def sql_length_score(esql: str, gsql: str) -> int:
         print(e)        
         return -10000
     
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import pandas as pd
+
 def cosin_sim(edf, gdf) -> float:
     try:
-        # Step 1: Identify common columns
+        if not isinstance(edf, pd.DataFrame) or not isinstance(gdf, pd.DataFrame):
+            print("Error: One or both inputs are not valid DataFrames")
+            return 0
+
+        # Ensure DataFrames are not empty
+        if edf.empty or gdf.empty:
+            print("Error: One or both DataFrames are empty")
+            return 0
+
         common_columns = list(set(edf.columns) & set(gdf.columns))
         if not common_columns:
+            print("Error: No common columns found")
             return 0
         
         cdf1 = edf[common_columns].copy()
         cdf2 = gdf[common_columns].copy()
 
-        # Step 2: Identify numeric and text columns
         numeric_columns = cdf1.select_dtypes(include=['number']).columns.tolist()
         text_columns = cdf1.select_dtypes(include=['object']).columns.tolist()
 
-        # Step 3: Process numeric data
         if numeric_columns:
-            # Identify constant columns
             constant_columns = cdf1[numeric_columns].nunique() == 1
             non_constant_columns = cdf1[numeric_columns].loc[:, ~constant_columns]
 
-            # Scale non-constant columns
-            scaler = MinMaxScaler()
             if not non_constant_columns.empty:
+                scaler = MinMaxScaler()
                 scaled_non_constant1 = scaler.fit_transform(non_constant_columns)
                 scaled_non_constant2 = scaler.transform(cdf2[non_constant_columns.columns])
             else:
-                scaled_non_constant1 = np.zeros((len(cdf1), 0))  # Handle empty non-constant array
+                scaled_non_constant1 = np.zeros((len(cdf1), 0))
                 scaled_non_constant2 = np.zeros((len(cdf2), 0))
 
-            # Add back constant columns without scaling
             if constant_columns.any():
                 constant_values1 = cdf1[constant_columns.index[constant_columns]].values
                 constant_values2 = cdf2[constant_columns.index[constant_columns]].values
 
-                # Ensure constant columns are 2D
                 constant_values1 = constant_values1.reshape(-1, 1) if len(constant_values1.shape) == 1 else constant_values1
                 constant_values2 = constant_values2.reshape(-1, 1) if len(constant_values2.shape) == 1 else constant_values2
 
                 numeric1 = np.hstack((scaled_non_constant1, constant_values1))
                 numeric2 = np.hstack((scaled_non_constant2, constant_values2))
             else:
-                # Only non-constant columns exist
                 numeric1, numeric2 = scaled_non_constant1, scaled_non_constant2
         else:
             numeric1, numeric2 = np.zeros((len(cdf1), 0)), np.zeros((len(cdf2), 0))
 
-        # Step 4: Process text data
         if text_columns:
-            # Combine text fields into a single column for each DataFrame
             cdf1['combined_text'] = cdf1[text_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
             cdf2['combined_text'] = cdf2[text_columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
 
@@ -168,7 +175,6 @@ def cosin_sim(edf, gdf) -> float:
         else:
             text_vectors1, text_vectors2 = np.zeros((len(cdf1), 0)), np.zeros((len(cdf2), 0))
 
-        # Step 5: Combine numeric and text vectors
         if numeric1.size > 0 and text_vectors1.size > 0:
             vectors1 = np.hstack((numeric1, text_vectors1))
             vectors2 = np.hstack((numeric2, text_vectors2))
@@ -179,7 +185,6 @@ def cosin_sim(edf, gdf) -> float:
         else:
             return 0
 
-        # Step 6: Compute cosine similarity
         cosine_sim = cosine_similarity(vectors1, vectors2)
         return np.mean(cosine_sim)
     
@@ -260,13 +265,13 @@ def qr_compare(edf, gdf) -> dict:
             "total_sim_score": 0
         }  
 
+#Compare contents, columns with certain number of consecutive matching characters are considered same
 def qr_compare_fuz(edf, gdf, fuz_len=0) -> dict:
     try:
-        # Helper function to preprocess column names
+
         def preprocess_column_name(col_name):
             return re.sub(r'[^a-zA-Z]', '', col_name)
 
-        # Preprocess column names
         edf_cols_processed = {col: preprocess_column_name(col) for col in edf.columns}
         gdf_cols_processed = {col: preprocess_column_name(col) for col in gdf.columns}
 
