@@ -1,6 +1,6 @@
 import os
 import re
-from tools.ingestsql import VectorSearch
+from ingestsql import VectorSearch
 from tools.db import DatabaseManager
 
 from sqlalchemy import create_engine
@@ -13,6 +13,8 @@ from llama_index.llms.anthropic import Anthropic
 
 from dotenv import load_dotenv
 load_dotenv()
+
+#customized rag pipeline for evaluation framework
 
 def is_null_or_empty(s):
     return s is None or s.strip() == ""
@@ -37,43 +39,10 @@ class RAGSearch(VectorSearch):
         response = query_engine.query(query_text)
         
         return response
-    
-def extract_sql_query(response_text: str) -> str:
-    """
-    Find the first continuous block of SQL-like text
-    """
-    sql_lines = []
-    in_sql_block = False
-    for line in response_text.split('\n'):
-        line = line.strip()
-        if line.upper().startswith('SELECT ') or line.upper().startswith('WITH '):
-            in_sql_block = True
-        
-        if in_sql_block:
-            sql_lines.append(line)
-            if line.endswith(';'):
-                break
-        
-        # Join and clean the SQL query
-        sql_query = ' '.join(sql_lines)
-        sql_query = re.sub(r'\s+', ' ', sql_query).strip()
-
-def extract_sql_query_o(response_text: str) -> str:
-        """
-        Look for SQL query between code blocks (```sql or ```)
-        """
-        # Strategy 1: Extract from code blocks
-        code_block_patterns = [
-            r'```sql(.*?)```',  # Markdown code block with sql
-            r'```(.*?)```',     # Generic code block
-            r'`(SELECT.*?);`',  # Inline code with SQL
-        ]
-        
-        for pattern in code_block_patterns:
-            match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
             
+
+#when doing Claude for rag, return value is not a simple SQL, but rather multiple sentences, and the SQL is embeded in the sentences.
+#Hence we need to extract sql_query from this resposne value. 
 def extract_sql_query_t(response_text: str) -> str:
         """
         Use regex to find SQL-like statements

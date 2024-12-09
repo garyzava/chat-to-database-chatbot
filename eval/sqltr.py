@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+#For calling DB with expected and generated SQL to obtain result and convert to dataframe
+
 class SQLTestRun:
     def __init__(self):
         self.is_dev = (os.getenv('ENV') == 'dev')
@@ -35,16 +37,16 @@ class SQLTestRun:
             columns = [desc[0] for desc in cursor.description]
             return pd.DataFrame(result, columns=columns)
 
-    def run_compare_query_results(self, query1, query2):
-        conn = None
-        try:
-            conn = psycopg2.connect(**self.db_config)
-            results1 = self.fetch_query_results(query1, conn)
-            results2 = self.fetch_query_results(query2, conn)
-            return results1.equals(results2)
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
-        finally:
-            if conn:
-                conn.close()
+    # def run_compare_query_results(self, query1, query2):
+    #     conn = None
+    #     try:
+    #         conn = psycopg2.connect(**self.db_config)
+    #         results1 = self.fetch_query_results(query1, conn)
+    #         results2 = self.fetch_query_results(query2, conn)
+    #         return results1.equals(results2)
+    #     except Exception as e:
+    #         print(f"Error: {e}")
+    #         return None
+    #     finally:
+    #         if conn:
+    #             conn.close()

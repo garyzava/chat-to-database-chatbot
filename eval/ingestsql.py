@@ -14,12 +14,14 @@ from llama_index.node_parser.docling import DoclingNodeParser
 from tools.db import DatabaseManager
 from dotenv import load_dotenv
 
+
+#customized inject for evaluation framework
+
 # Load environment variables
 load_dotenv()
 # Embedding model configuration
 Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
-# Use no LLM model
-#Settings.llm = None
+
 
 # Explicitly set the environment variable TOKENIZERS_PARALLELISM to false
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -37,13 +39,10 @@ class VectorSearch:
             schema_name="public",
             embed_dim=384
         )
-        #self.has_vectors = self._check_vectors_exist()
-        #print(f"Vector store has data: {self.has_vectors}")
 
         # Check if vectors exist, create if needed
         self.has_vectors = self._check_vectors_exist()
         if not self.has_vectors:
-            # print("No vectors found. Creating new vector store...")
             self._initialize_vectors()
             # check if there is error in initializing vectors (verify 30-nov)
             if not self.has_vectors:
@@ -55,7 +54,9 @@ class VectorSearch:
             # Convert documents
             # Get base directory - use ENV variable for Docker. For docker, base directory is /app
             is_docker = os.getenv('ENV', 'true').lower() == 'true'
-            base_dir = Path("/app") if is_docker else Path(__file__).parent.parent.parent
+            # base_dir = Path("/app") if is_docker else Path(__file__).parent.parent.parent
+            base_dir = Path("/app") if is_docker else Path(__file__).parent.parent
+            print("base_dire is: ", base_dir)
 
             # Define document paths relative to base directory
             doc_paths = [
@@ -101,9 +102,6 @@ class VectorSearch:
         """
         try:
             result = self.db_manager.execute_query(query)
-            #if isinstance(result, list) and result[0][0]:
-            #    return True
-            #return False
 
             if not (isinstance(result, list) and result[0][0]):
                 return False
@@ -146,7 +144,6 @@ class VectorSearch:
         if self.has_vectors and not force_rebuild:
             return self.load_index()
 
-        # print("Creating new vector store...")
         reader = SimpleDirectoryReader(
             input_dir=str(docs_dir),
             file_extractor={".*": DoclingReader(export_type=DoclingReader.ExportType.JSON)}
@@ -166,7 +163,6 @@ class VectorSearch:
 
     def load_index(self) -> VectorStoreIndex:
         """Load existing index from vector store."""
-        # print("Loading existing vectors from database...")
         storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
         return VectorStoreIndex.from_vector_store(
             vector_store=self.vector_store,
@@ -201,15 +197,12 @@ def main(force_rebuild: bool = False):
 
     # Only convert and create index if needed
     if force_rebuild or not searcher.has_vectors:
-        # print("Converting documents and creating index...")
         searcher.convert_documents(input_docs, output_dir)
         index = searcher.create_index(output_dir, force_rebuild=force_rebuild)
     else:
-        # print("Using existing vector index")
         index = searcher.load_index()
 
     result = searcher.query(index, "What is the album table?")
-    # print(result)
 
 if __name__ == "__main__":
     main()

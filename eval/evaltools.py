@@ -8,8 +8,10 @@ project_dir = os.path.abspath("..")
 chat2dbchatbot_dir = os.path.join(project_dir, "chat2dbchatbot")
 if chat2dbchatbot_dir not in sys.path:
     sys.path.append(chat2dbchatbot_dir)
-import tools.tagsql as tagsql
-import tools.ragsql as ragsql
+# import tools.tagsql as tagsql
+# import tools.ragsql as ragsql
+import tagsql
+import ragsql
 importlib.reload(ragsql)
 importlib.reload(tagsql)
 import pandas as pd
@@ -19,9 +21,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from sqltr import SQLTestRun
-sqlTestRun = SQLTestRun()
 
+# from sqltr import SQLTestRun
+# sqlTestRun = SQLTestRun()
+
+# rag call wrapper function
 def gen_rag_query(textQuery: str, llm_provider: str = "OpenAI", temperature: float = 0.1)->str:
         result = ""
         try:
@@ -31,6 +35,7 @@ def gen_rag_query(textQuery: str, llm_provider: str = "OpenAI", temperature: flo
             print(e)
             return "error"
         
+# tag call wrapper function
 async def gen_tag_query(textQuery: str, llm_provider: str = "OpenAI", temperature: float = 0.1)->str:
         result = ""
         try:
@@ -40,9 +45,10 @@ async def gen_tag_query(textQuery: str, llm_provider: str = "OpenAI", temperatur
             print(e)
             return "error"
 
+#check SQL validity through sqlglot
 def check_sql_errors(rq: str)->dict:
     try:
-        parsed = sqlglot.parse_one(rq, dialect='postgres')
+        parsed = sqlglot.parse_one(rq, dialect='postgres') #specify the database type
         return {
                 "isValid": True,
                 "errMessage": "",
@@ -53,7 +59,7 @@ def check_sql_errors(rq: str)->dict:
                 "isValid": False,
                 "errMessage": str(e),
             }
-
+#check if the query is an SQL query
 def is_sql_check(rq: str) -> bool:
     isSQL = False
     rq  = rq.strip().upper()
@@ -61,11 +67,14 @@ def is_sql_check(rq: str) -> bool:
             isSQL = True
     return isSQL
 
+#check if translatability identified by chatbot is the same as actual translatability
 def confirm_type(rq: str, isExpectSQL:bool) -> bool:
     if is_sql_check(rq) == isExpectSQL:
          return True
     else: return False
 
+
+#clean unnecessary characters from the sql string, especially for Claude RAG, need to remove noise: text before and after the SQL script, line breaks, SQL comment through "--"
 def clean_sql(rq: str)->str:
     result = ""
     try:
@@ -75,7 +84,9 @@ def clean_sql(rq: str)->str:
     except Exception as e:
         print(e)
         return "error"
-        
+
+#remove all the white spaces and linebreaks 
+# and Standardize the letter cases.       
 def flatten_sql(rq: str)->str:
     try:
         flattened = re.sub(r"[\s;]+", "", rq).lower()
@@ -83,7 +94,8 @@ def flatten_sql(rq: str)->str:
     except sqlglot.ParseError as e:
         print(e)        
         return "error"
-            
+
+#check how similar the generated SQL is to expected SQL          
 def sql_compare_score(esql: str, gsql: str) -> float:
     try:
         esql_flat = flatten_sql(esql)
@@ -94,6 +106,7 @@ def sql_compare_score(esql: str, gsql: str) -> float:
         print(e)        
         return -1    
 
+# len(expected sql) - len(generated sql), the more positive the better
 def sql_length_score(esql: str, gsql: str) -> int:
     try:
         esql_flat = flatten_sql(esql)
@@ -109,26 +122,21 @@ def sql_length_score(esql: str, gsql: str) -> int:
         return -10000
     
 
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import pandas as pd
-
+#cosine similarity of the SQL call response data frames
 def cosin_sim(edf, gdf) -> float:
     try:
         if not isinstance(edf, pd.DataFrame) or not isinstance(gdf, pd.DataFrame):
-            print("Error: One or both inputs are not valid DataFrames")
+            # print("Error: One or both inputs are not valid DataFrames")
             return 0
 
         # Ensure DataFrames are not empty
         if edf.empty or gdf.empty:
-            print("Error: One or both DataFrames are empty")
+            # print("Error: One or both DataFrames are empty")
             return 0
 
         common_columns = list(set(edf.columns) & set(gdf.columns))
         if not common_columns:
-            print("Error: No common columns found")
+            # print("Error: No common columns found")
             return 0
         
         cdf1 = edf[common_columns].copy()
@@ -137,6 +145,8 @@ def cosin_sim(edf, gdf) -> float:
         numeric_columns = cdf1.select_dtypes(include=['number']).columns.tolist()
         text_columns = cdf1.select_dtypes(include=['object']).columns.tolist()
 
+        # handle numeric column and text column separately
+        #text column needs to do Tfidf to do vectorization
         if numeric_columns:
             constant_columns = cdf1[numeric_columns].nunique() == 1
             non_constant_columns = cdf1[numeric_columns].loc[:, ~constant_columns]
@@ -189,10 +199,10 @@ def cosin_sim(edf, gdf) -> float:
         return np.mean(cosine_sim)
     
     except Exception as e:
-        print("Error:", e)
+        # print("Error:", e)
         return 0
 
-
+# compare SQL response data frame first get column similarity then row similarity
 def qr_compare(edf, gdf) -> dict:
     try:
         common_columns = list(set(edf.columns) & set(gdf.columns))
@@ -242,9 +252,9 @@ def qr_compare(edf, gdf) -> dict:
                         if matched:            
                             num_match_row = num_match_row + 1
         
-                # print("nums: ", edf_len, gdf_len, num_match_row)
                 rows_sim_score = num_match_row/edf_len
 
+            #weighted sum num_len_diff_score is a penalty
             total_sim_score = (cols_sim_score * 0.5) + (rows_sim_score * 0.5) - (num_len_diff_score*0.1)
             if(total_sim_score<0):
                 total_sim_score = 0
