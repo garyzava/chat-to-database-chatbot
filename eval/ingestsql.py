@@ -54,7 +54,6 @@ class VectorSearch:
             # Convert documents
             # Get base directory - use ENV variable for Docker. For docker, base directory is /app
             is_docker = os.getenv('ENV', 'true').lower() == 'true'
-            # base_dir = Path("/app") if is_docker else Path(__file__).parent.parent.parent
             base_dir = Path("/app") if is_docker else Path(__file__).parent.parent
             print("base_dire is: ", base_dir)
 

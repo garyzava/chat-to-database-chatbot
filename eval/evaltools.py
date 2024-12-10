@@ -8,8 +8,6 @@ project_dir = os.path.abspath("..")
 chat2dbchatbot_dir = os.path.join(project_dir, "chat2dbchatbot")
 if chat2dbchatbot_dir not in sys.path:
     sys.path.append(chat2dbchatbot_dir)
-# import tools.tagsql as tagsql
-# import tools.ragsql as ragsql
 import tagsql
 import ragsql
 importlib.reload(ragsql)
@@ -20,10 +18,6 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-
-# from sqltr import SQLTestRun
-# sqlTestRun = SQLTestRun()
 
 # rag call wrapper function
 def gen_rag_query(textQuery: str, llm_provider: str = "OpenAI", temperature: float = 0.1)->str:
@@ -85,8 +79,7 @@ def clean_sql(rq: str)->str:
         print(e)
         return "error"
 
-#remove all the white spaces and linebreaks 
-# and Standardize the letter cases.       
+#remove all the white spaces and linebreaks and standardize the letter cases.       
 def flatten_sql(rq: str)->str:
     try:
         flattened = re.sub(r"[\s;]+", "", rq).lower()
