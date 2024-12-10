@@ -132,3 +132,10 @@ The intent classifier piece uses data from the following datasets. Access to the
   - **Ownership**: WebQuestions (http://nlp.stanford.edu/software/sempre/ - Berant et al., 2013, CC-BY)
   - **Licenses and Use**: Distributed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license, allowing sharing and adaptation with appropriate credit.
   - **Access**: Available on GitHub at [https://github.com/brmson/dataset-factoid-webquestions](https://github.com/brmson/dataset-factoid-webquestions)
+
+---
+
+## Evaluation Framework
+
+- Located under the [eval](eval/) sub-folder
+- Evaluation Framework [README is here](eval/README.md)
