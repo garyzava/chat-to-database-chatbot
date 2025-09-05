@@ -139,3 +139,10 @@ The intent classifier piece uses data from the following datasets. Access to the
 
 - Located under the [eval](eval/) sub-folder
 - Evaluation Framework [README is here](eval/README.md)
+
+---
+
+## Project Paper
+
+A detailed write-up describing the architecture, design decisions, and evaluation of Chat2DB GenAI Chatbot:  
+[Read the Paper][Chat to your Database GenAI Chatbot](https://drive.google.com/file/d/1qo4Y8pGKJag-Qsw5qHBtl3uv1t65NPgk/view?usp=sharing)
