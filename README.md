@@ -145,4 +145,4 @@ The intent classifier piece uses data from the following datasets. Access to the
 ## Project Paper
 
 A detailed write-up describing the architecture, design decisions, and evaluation of Chat2DB GenAI Chatbot:  
-[Read the Paper](https://drive.google.com/file/d/1qo4Y8pGKJag-Qsw5qHBtl3uv1t65NPgk/view?usp=sharing)
+[Read the Paper](https://github.com/garyzava/chat-to-database-chatbot/blob/main/Capstone%20Final%20Report.pdf)
